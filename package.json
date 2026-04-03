@@ -2,8 +2,8 @@
   "name": "namaaz-tracker",
   "version": "1.0.0",
   "scripts": {
-    "vercel-build": "echo 'No build step needed for static site' && mkdir -p build && cp -r public/* build/ && cp -r src/* build/",
-    "build": "echo 'No build step needed for static site' && mkdir -p build && cp -r public/* build/ && cp -r src/* build/"
+    "vercel-build": "sed 's/%PUBLIC_URL%//g' public/index.html > build/index.html && mkdir -p build && cp -r public/* build/ && cp -r src/* build/",
+    "build": "sed 's/%PUBLIC_URL%//g' public/index.html > build/index.html && mkdir -p build && cp -r public/* build/ && cp -r src/* build/"
   },
   "dependencies": {
     "firebase": "^12.11.0"
