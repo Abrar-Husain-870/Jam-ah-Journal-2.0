@@ -1,0 +1,60 @@
+{
+  "name": "namaaz-tracker",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/sw.js",
+      "headers": {
+        "content-type": "application/javascript",
+        "cache-control": "no-cache"
+      }
+    },
+    {
+      "src": "/manifest.json",
+      "headers": {
+        "content-type": "application/json",
+        "cache-control": "s-maxage=86400"
+      }
+    },
+    {
+      "src": "/static/(.*)",
+      "headers": {
+        "cache-control": "s-maxage=31536000,immutable"
+      }
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "headers": {
+        "content-type": "image/png",
+        "cache-control": "s-maxage=86400"
+      }
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "headers": {
+        "content-type": "image/png",
+        "cache-control": "s-maxage=86400"
+      }
+    },
+    {
+      "src": "/LogoHeader.png",
+      "headers": {
+        "content-type": "image/png",
+        "cache-control": "s-maxage=86400"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
