@@ -1,4 +1,4 @@
-# Jamā'ah Journal - Prayer Tracker
+# Jamā'ah Journal - Prayer Tracker 
 
 A modern React application for tracking daily prayers with Firebase authentication and data persistence.
 
