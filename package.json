@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "npx serve public -p 8080",
-    "vercel-build": "mkdir -p build && sed 's/%PUBLIC_URL%//g' public/index.html > build/index.html && cp -r public/* build/ && cp -r src/* build/",
-    "build": "mkdir -p build && sed 's/%PUBLIC_URL%//g' public/index.html > build/index.html && cp -r public/* build/ && cp -r src/* build/"
+    "vercel-build": "node build.js",
+    "build": "node build.js"
   },
   "dependencies": {
     "firebase": "^12.11.0"
