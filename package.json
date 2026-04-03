@@ -2,11 +2,25 @@
   "name": "namaaz-tracker",
   "version": "1.0.0",
   "scripts": {
-    "dev": "npx serve public -p 8080",
-    "vercel-build": "node build.js",
-    "build": "node build.js"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "dependencies": {
-    "firebase": "^12.11.0"
+    "chart.js": "^4.5.0",
+    "chartjs-plugin-zoom": "^2.2.0",
+    "firebase": "^12.11.0",
+    "lucide-react": "^0.515.0",
+    "react": "^18.3.1",
+    "react-calendar": "^5.1.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^18.3.1",
+    "react-scripts": "5.0.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
   }
 }
