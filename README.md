@@ -147,4 +147,4 @@ For issues and questions:
 
 ---
 
-Built with ❤️ for the Muslim community
+Built with ❤️ for the Muslim community  
