@@ -15,13 +15,13 @@ const cleanEnv = (value) => {
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: cleanEnv(process.env.REACT_APP_FIREBASE_API_KEY) || "AIzaSyAwUFZh2fMFY5sg1h06b1Gz9bLK2NsEy90",
-  authDomain: cleanEnv(process.env.REACT_APP_FIREBASE_AUTH_DOMAIN) || "jamaah-journal-2.firebaseapp.com",
-  projectId: cleanEnv(process.env.REACT_APP_FIREBASE_PROJECT_ID) || "jamaah-journal-2",
-  storageBucket: cleanEnv(process.env.REACT_APP_FIREBASE_STORAGE_BUCKET) || "jamaah-journal-2.firebasestorage.app",
-  messagingSenderId: cleanEnv(process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID) || "362976185134",
-  appId: cleanEnv(process.env.REACT_APP_FIREBASE_APP_ID) || "1:362976185134:web:d5a636b787ac1c7c4288bf",
-  measurementId: cleanEnv(process.env.REACT_APP_FIREBASE_MEASUREMENT_ID) || "G-QE6K6XPM58"
+  apiKey: cleanEnv(process.env.REACT_APP_FIREBASE_API_KEY),
+  authDomain: cleanEnv(process.env.REACT_APP_FIREBASE_AUTH_DOMAIN),
+  projectId: cleanEnv(process.env.REACT_APP_FIREBASE_PROJECT_ID),
+  storageBucket: cleanEnv(process.env.REACT_APP_FIREBASE_STORAGE_BUCKET),
+  messagingSenderId: cleanEnv(process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID),
+  appId: cleanEnv(process.env.REACT_APP_FIREBASE_APP_ID),
+  measurementId: cleanEnv(process.env.REACT_APP_FIREBASE_MEASUREMENT_ID)
 };
 
 // Initialize Firebase
