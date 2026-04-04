@@ -149,4 +149,4 @@ For issues and questions:
 
 Built with ❤️ for the Muslim community  
 Abrar please give me permission on vercel to deploy
-   
+      
