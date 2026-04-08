@@ -21,27 +21,30 @@ const RefreshAppButton = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-100">
-      <div className="flex items-center gap-3 mb-3">
-        <Smartphone className="w-5 h-5 text-primary-600" />
-        <h3 className="text-lg font-semibold text-gray-800">App Updates</h3>
+    <div className="rounded-3xl border border-jj-border/80 dark:border-white/10 bg-jj-surface dark:bg-jj-surface-dark p-5 sm:p-6 shadow-sm">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="h-10 w-10 rounded-2xl bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center border border-jj-border/60 dark:border-white/10">
+          <Smartphone className="w-5 h-5 text-jj-accent dark:text-teal-300" strokeWidth={1.75} />
+        </div>
+        <h3 className="text-base font-semibold text-jj-ink dark:text-stone-100">App refresh</h3>
       </div>
-      
-      <p className="text-sm text-gray-600 mb-4">
-        If you're experiencing issues or not seeing the latest features, you can manually refresh the app to get the newest version.
+
+      <p className="text-sm text-jj-muted dark:text-stone-400 mb-4 leading-relaxed">
+        If something looks stuck after an update, reload once to pull the latest assets from the service worker.
       </p>
-      
+
       <button
+        type="button"
         onClick={handleRefresh}
         disabled={isRefreshing}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-jj-accent dark:bg-teal-600 text-white font-medium hover:opacity-95 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
       >
-        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        {isRefreshing ? 'Refreshing App...' : 'Refresh App'}
+        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+        {isRefreshing ? 'Refreshing…' : 'Refresh now'}
       </button>
-      
-      <p className="text-xs text-gray-500 mt-2 text-center">
-        This will clear cache and reload the app with the latest version
+
+      <p className="text-xs text-jj-muted dark:text-stone-500 mt-3 text-center">
+        Clears cached shell files and reloads the page.
       </p>
     </div>
   );

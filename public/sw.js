@@ -38,8 +38,10 @@ self.addEventListener('install', (event) => {
         console.error('Cache install failed:', error);
       })
   );
-  // Skip waiting to activate immediately
-  self.skipWaiting();
+  // Do not call skipWaiting() here — that forces every update to activate immediately,
+  // firing controllerchange and page reloads (see serviceWorkerUpdate.js). Updates only
+  // activate after the user chooses "Update" (SKIP_WAITING message). First install still
+  // activates without this because there is no prior controller.
 });
 
 // Fetch event - intelligent caching strategy

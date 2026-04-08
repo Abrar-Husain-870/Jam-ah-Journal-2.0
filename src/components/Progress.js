@@ -1,19 +1,16 @@
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
+import { Bar, Line } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  Decimation,
-} from 'chart.js';
-import { Bar, Pie, Line } from 'react-chartjs-2';
+  getBarChartOptions,
+  getLineChartOptions,
+  getChartColors,
+  getMutedStatusColors,
+  getCountsHorizontalBarOptions,
+  getSparklineOptions,
+  axisLabelForTrendDate,
+  getLinePointMarkerDatasetStyle,
+} from '../lib/chartTheme';
+import { ensureChartsRegistered, ChartJS } from '../lib/registerCharts';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -31,30 +28,34 @@ import {
   Zap,
   Book
 } from 'lucide-react';
-import { 
-  getMonthlyStats, 
-  getYearlyStats, 
+import {
+  getMonthlyStats,
+  getYearlyStats,
   getRecentStats,
   getAllTimeStats,
   getMotivationalInsights,
   getDailyTrend,
-  getPrayerDataInRange
+  getPrayerDataInRange,
+  calculatePrayerStats,
 } from '../services/analyticsService';
 import { PRAYER_STATUS, PRAYER_COLORS, PRAYER_TYPES, PRAYER_SCORES, SURAH_ALKAHF, SURAH_STATUS, SURAH_SCORES } from '../services/prayerService';
 import { useTheme } from '../contexts/ThemeContext';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  Decimation
-);
+import {
+  AnalyticsCard,
+  AnalyticsSection,
+  ChartCard,
+  EmptyStateCard,
+  InsightCallout,
+  KPIStatCard,
+  SectionHeader,
+} from './analytics';
+import { startOfCalendarMonth, startOfCalendarWeek } from '../analytics/dateRange';
+import {
+  buildLastNDaysSlotCompletionSeries,
+  countAddressedPrayerSlots,
+  deriveSalahAdherenceInsights,
+  deriveWeekdayMissInsight,
+} from '../analytics/progressDerivations';
 
 const Progress = () => {
   const { currentUser } = useAuth();
@@ -72,7 +73,12 @@ const Progress = () => {
   const [smooth, setSmooth] = useState(false); // moving average smoothing
   const [zoomReady, setZoomReady] = useState(false); // zoom plugin loaded
   const [isSmallScreen, setIsSmallScreen] = useState(typeof window !== 'undefined' ? window.innerWidth < 480 : false);
+  const [atAGlance, setAtAGlance] = useState(null);
   const chartRef = useRef(null);
+
+  useEffect(() => {
+    ensureChartsRegistered();
+  }, []);
 
   // Load user preferences from localStorage
   useEffect(() => {
@@ -135,14 +141,6 @@ const Progress = () => {
     return () => { mounted = false; };
   }, []);
 
-  // Update small-screen flag on resize for responsive x-axis label rotation
-  useEffect(() => {
-    const onResize = () => setIsSmallScreen(window.innerWidth < 480);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  // Update small-screen flag on resize to control x-axis label rotation and density
   useEffect(() => {
     const onResize = () => setIsSmallScreen(window.innerWidth < 480);
     window.addEventListener('resize', onResize);
@@ -152,6 +150,7 @@ const Progress = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
+      setAtAGlance(null);
       let statsData;
       let startDate;
       let endDate;
@@ -190,13 +189,43 @@ const Progress = () => {
       setStats(statsData);
       setInsights(getMotivationalInsights(statsData));
 
-      // Load daily trend (complete days only) and build cumulative leaderboard-style series
+      // Load daily trend (complete days only), calendar-window glance metrics, and build cumulative series
       if (startDate && endDate) {
-        const trend = await getDailyTrend(currentUser.uid, startDate, endDate, masjidMode);
+        const now = new Date();
+        const w0 = startOfCalendarWeek(now);
+        const m0 = startOfCalendarMonth(now);
+        const last7End = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const last7Start = new Date(last7End);
+        last7Start.setDate(last7Start.getDate() - 6);
+        const prev7End = new Date(last7Start);
+        prev7End.setDate(prev7End.getDate() - 1);
+        const prev7Start = new Date(prev7End);
+        prev7Start.setDate(prev7Start.getDate() - 6);
+
+        const [trend, prayerData, weekMap, monthMap, last7Map, prev7Map] = await Promise.all([
+          getDailyTrend(currentUser.uid, startDate, endDate, masjidMode),
+          getPrayerDataInRange(currentUser.uid, startDate, endDate),
+          getPrayerDataInRange(currentUser.uid, w0, now),
+          getPrayerDataInRange(currentUser.uid, m0, now),
+          getPrayerDataInRange(currentUser.uid, last7Start, last7End),
+          getPrayerDataInRange(currentUser.uid, prev7Start, prev7End),
+        ]);
+
         setDailyTrend(trend);
 
+        const s7 = calculatePrayerStats(last7Map, masjidMode);
+        const sPrev7 = calculatePrayerStats(prev7Map, masjidMode);
+        const spark = buildLastNDaysSlotCompletionSeries(last7Map, 7, now);
+        setAtAGlance({
+          weekAddressed: countAddressedPrayerSlots(weekMap),
+          monthAddressed: countAddressedPrayerSlots(monthMap),
+          consistencyDelta7d: (s7.consistency || 0) - (sPrev7.consistency || 0),
+          weekdayMissText: deriveWeekdayMissInsight(last7Map),
+          weekSparkLabels: spark.labels,
+          weekSparkValues: spark.values,
+        });
+
         // Build cumulative series using raw prayer data and leaderboard formulas
-        const prayerData = await getPrayerDataInRange(currentUser.uid, startDate, endDate);
         const dates = Object.keys(prayerData).sort();
 
         // Cumulative aggregates
@@ -217,9 +246,6 @@ const Progress = () => {
         const series = [];
 
         // Helper: per-day completeness and scoring similar to calculatePrayerStats
-        const dailyMaxPrayerScore = masjidMode ? 27 : 27; // both modes use 27 as per leaderboard
-        const fridayBonus = 10;
-
         const isFridayLocal = (dateObj) => dateObj.getDay() === 5;
 
         dates.forEach(date => {
@@ -341,6 +367,7 @@ const Progress = () => {
       } else {
         setDailyTrend([]);
         setCumulativeTrend([]);
+        setAtAGlance(null);
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -363,79 +390,65 @@ const Progress = () => {
   };
 
   const getInsightIcon = (type) => {
+    const cls = 'w-5 h-5 shrink-0 text-jj-accent dark:text-teal-300 opacity-90';
     switch (type) {
       case 'praise':
-        return <Award className="w-6 h-6 text-yellow-500" />;
+        return <Award className={cls} strokeWidth={1.75} />;
       case 'achievement':
-        return <Star className="w-6 h-6 text-purple-500" />;
+        return <Star className={cls} strokeWidth={1.75} />;
       case 'momentum':
-        return <Flame className="w-6 h-6 text-orange-500" />;
+        return <Flame className={cls} strokeWidth={1.75} />;
       case 'encouragement':
-        return <TrendingUp className="w-6 h-6 text-blue-500" />;
+        return <TrendingUp className={cls} strokeWidth={1.75} />;
       default:
-        return <Target className="w-6 h-6 text-green-500" />;
+        return <Target className={cls} strokeWidth={1.75} />;
     }
   };
 
   // Prepare chart data
   const isDark = resolvedTheme === 'dark';
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 640 : false;
-  const pieBorderColor = isDark ? '#0a0a0a' : '#ffffff';
-  const prayerBreakdownData = React.useMemo(() => {
+  const muted = React.useMemo(() => getMutedStatusColors(isDark), [isDark]);
+
+  /** Same breakdown semantics as the former doughnut: completed-day counts by status (+ perfect days row in home mode). */
+  const statusBarData = React.useMemo(() => {
     if (!stats) return null;
     if (masjidMode) {
-      // Home Prayer Mode: custom order and slices per request
-      // New order (clockwise from top): Perfect Days (green), Prayed (blue), Qaza (yellow), Not Prayed (red)
       const labels = ['Perfect Days', 'Prayed', 'Qaza', 'Not Prayed'];
-      const data = [
-        stats.totalDays,
-        stats.prayerBreakdown[PRAYER_STATUS.HOME],
-        stats.prayerBreakdown[PRAYER_STATUS.QAZA],
-        stats.prayerBreakdown[PRAYER_STATUS.NOT_PRAYED],
-      ];
-      const backgroundColor = [
-        '#22c55e',
-        PRAYER_COLORS[PRAYER_STATUS.HOME],
-        PRAYER_COLORS[PRAYER_STATUS.QAZA],
-        PRAYER_COLORS[PRAYER_STATUS.NOT_PRAYED],
-      ];
       return {
         labels,
         datasets: [
           {
-            data,
-            backgroundColor,
-            borderWidth: 2,
-            borderColor: pieBorderColor,
-            hoverBorderWidth: 2,
+            label: 'Count',
+            data: [
+              stats.totalDays,
+              stats.prayerBreakdown[PRAYER_STATUS.HOME],
+              stats.prayerBreakdown[PRAYER_STATUS.QAZA],
+              stats.prayerBreakdown[PRAYER_STATUS.NOT_PRAYED],
+            ],
+            backgroundColor: [muted.perfect, muted.home, muted.qaza, muted.notPrayed],
+            borderWidth: 0,
           },
         ],
       };
     }
-    // Standard mode: include Masjid slice
     return {
       labels: ['Masjid', 'Home', 'Qaza', 'Not Prayed'],
       datasets: [
         {
+          label: 'Count',
           data: [
             stats.prayerBreakdown[PRAYER_STATUS.MASJID],
             stats.prayerBreakdown[PRAYER_STATUS.HOME],
             stats.prayerBreakdown[PRAYER_STATUS.QAZA],
             stats.prayerBreakdown[PRAYER_STATUS.NOT_PRAYED],
           ],
-          backgroundColor: [
-            PRAYER_COLORS[PRAYER_STATUS.MASJID],
-            PRAYER_COLORS[PRAYER_STATUS.HOME],
-            PRAYER_COLORS[PRAYER_STATUS.QAZA],
-            PRAYER_COLORS[PRAYER_STATUS.NOT_PRAYED],
-          ],
-          borderWidth: 2,
-          borderColor: pieBorderColor,
-          hoverBorderWidth: 2,
+          backgroundColor: [muted.masjid, muted.home, muted.qaza, muted.notPrayed],
+          borderWidth: 0,
         },
       ],
     };
-  }, [stats, masjidMode, pieBorderColor]);
+  }, [stats, masjidMode, muted]);
 
   const prayerTypeData = React.useMemo(() => {
     if (!stats) return null;
@@ -446,24 +459,24 @@ const Progress = () => {
         datasets: [
           {
             label: 'Home',
-            data: Object.keys(stats.prayerTypeStats).map(prayer => 
+            data: Object.keys(stats.prayerTypeStats).map((prayer) =>
               stats.prayerTypeStats[prayer][PRAYER_STATUS.HOME]
             ),
-            backgroundColor: PRAYER_COLORS[PRAYER_STATUS.HOME],
+            backgroundColor: muted.home,
           },
           {
             label: 'Qaza',
-            data: Object.keys(stats.prayerTypeStats).map(prayer => 
+            data: Object.keys(stats.prayerTypeStats).map((prayer) =>
               stats.prayerTypeStats[prayer][PRAYER_STATUS.QAZA]
             ),
-            backgroundColor: PRAYER_COLORS[PRAYER_STATUS.QAZA],
+            backgroundColor: muted.qaza,
           },
           {
             label: 'Not Prayed',
-            data: Object.keys(stats.prayerTypeStats).map(prayer =>
+            data: Object.keys(stats.prayerTypeStats).map((prayer) =>
               stats.prayerTypeStats[prayer][PRAYER_STATUS.NOT_PRAYED]
             ),
-            backgroundColor: PRAYER_COLORS[PRAYER_STATUS.NOT_PRAYED],
+            backgroundColor: muted.notPrayed,
           },
         ],
       };
@@ -473,56 +486,81 @@ const Progress = () => {
       datasets: [
         {
           label: 'Masjid',
-          data: Object.keys(stats.prayerTypeStats).map(prayer => 
+          data: Object.keys(stats.prayerTypeStats).map((prayer) =>
             stats.prayerTypeStats[prayer][PRAYER_STATUS.MASJID]
           ),
-          backgroundColor: PRAYER_COLORS[PRAYER_STATUS.MASJID],
+          backgroundColor: muted.masjid,
         },
         {
           label: 'Home',
-          data: Object.keys(stats.prayerTypeStats).map(prayer => 
+          data: Object.keys(stats.prayerTypeStats).map((prayer) =>
             stats.prayerTypeStats[prayer][PRAYER_STATUS.HOME]
           ),
-          backgroundColor: PRAYER_COLORS[PRAYER_STATUS.HOME],
+          backgroundColor: muted.home,
         },
         {
           label: 'Qaza',
-          data: Object.keys(stats.prayerTypeStats).map(prayer => 
+          data: Object.keys(stats.prayerTypeStats).map((prayer) =>
             stats.prayerTypeStats[prayer][PRAYER_STATUS.QAZA]
           ),
-          backgroundColor: PRAYER_COLORS[PRAYER_STATUS.QAZA],
+          backgroundColor: muted.qaza,
         },
         {
           label: 'Not Prayed',
-          data: Object.keys(stats.prayerTypeStats).map(prayer =>
+          data: Object.keys(stats.prayerTypeStats).map((prayer) =>
             stats.prayerTypeStats[prayer][PRAYER_STATUS.NOT_PRAYED]
           ),
-          backgroundColor: PRAYER_COLORS[PRAYER_STATUS.NOT_PRAYED],
+          backgroundColor: muted.notPrayed,
         },
       ],
     };
-  }, [stats, masjidMode]);
+  }, [stats, masjidMode, muted]);
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'bottom',
-      },
-    },
-  };
+  const barOptions = React.useMemo(
+    () =>
+      getBarChartOptions(isDark, {
+        stacked: true,
+        xTickLimit: isMobile ? 5 : 7,
+        isMobile,
+      }),
+    [isDark, isMobile]
+  );
 
-  // Trend chart configuration
-  // Format dates like 31/6/25
-  const formatShortDate = (iso) => {
-    if (!iso) return '';
-    const [yy, mm, dd] = iso.split('-').map(Number);
-    return `${dd}/${mm}/${String(yy).slice(2)}`;
-  };
+  const statusBarOptions = React.useMemo(() => getCountsHorizontalBarOptions(isDark), [isDark]);
+
+  const sparkLineData = React.useMemo(() => {
+    if (!atAGlance?.weekSparkLabels?.length) return null;
+    const c = getChartColors(isDark);
+    const markers = getLinePointMarkerDatasetStyle(isDark);
+    return {
+      labels: atAGlance.weekSparkLabels,
+      datasets: [
+        {
+          label: 'Five prayers addressed',
+          data: atAGlance.weekSparkValues,
+          borderColor: c.accent,
+          backgroundColor: c.accentFill,
+          fill: true,
+          tension: 0.46,
+          borderWidth: 2.5,
+          pointStyle: 'circle',
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointHitRadius: 28,
+          ...markers,
+        },
+      ],
+    };
+  }, [atAGlance, isDark]);
+
+  const sparkLineOptions = React.useMemo(() => getSparklineOptions(isDark), [isDark]);
+
+  // Trend chart configuration — shared axis rules from chartTheme (mobile: Jan 8 · desktop: d/m/yy)
   const trendLabels = React.useMemo(() => {
-    const source = (cumulativeTrend.length > 0 ? cumulativeTrend : dailyTrend);
-    return source.map(p => formatShortDate(p.date));
-  }, [cumulativeTrend, dailyTrend]);
+    const source = cumulativeTrend.length > 0 ? cumulativeTrend : dailyTrend;
+    const style = isSmallScreen ? 'compact' : undefined;
+    return source.map((p) => axisLabelForTrendDate(p.date, style));
+  }, [cumulativeTrend, dailyTrend, isSmallScreen]);
   // Use leaderboard-style cumulative series when available, otherwise fallback to per-day values
   const trendDataValues = React.useMemo(() => {
     if (cumulativeTrend.length > 0) {
@@ -544,8 +582,9 @@ const Progress = () => {
     return result;
   };
   const smoothedValues = React.useMemo(() => movingAverage(trendDataValues, trendType === 'average' ? 5 : 7), [trendDataValues, trendType]);
-  const primaryStroke = isDark ? '#60a5fa' : '#3b82f6'; // blue-500/400
-  const primaryFill = isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.12)';
+  const chartPalette = getChartColors(isDark);
+  const primaryStroke = chartPalette.accent;
+  const primaryFill = chartPalette.accentFill;
 
   // Dynamic Y-axis range based on visible series (smoothed or raw)
   const { dynMin, dynMax } = React.useMemo(() => {
@@ -582,116 +621,182 @@ const Progress = () => {
     return { dynMin: minOut, dynMax: maxOut };
   }, [smooth, smoothedValues, trendDataValues, trendType]);
 
-  const trendData = React.useMemo(() => ({
-    labels: trendLabels,
-    datasets: [
-      {
-        label: trendType === 'average' ? 'Average Score' : 'Composite Score',
-        data: smooth ? smoothedValues : trendDataValues,
-        borderColor: primaryStroke,
-        backgroundColor: primaryFill,
-        pointBackgroundColor: primaryStroke,
-        pointBorderColor: primaryStroke,
-        pointStyle: 'circle',
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        pointBorderWidth: 0,
-        fill: true,
-        tension: smooth ? 0.35 : 0.25,
-        borderWidth: 2,
-      }
-    ]
-  }), [trendLabels, trendType, smooth, smoothedValues, trendDataValues, primaryStroke, primaryFill]);
-
-  const trendOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: function(ctx) {
-            const val = ctx.parsed.y;
-            return (trendType === 'average' ? 'Average: ' : 'Composite: ') + (trendType === 'average' ? val.toFixed(0) : val.toFixed(2));
-          }
-        }
-      },
-      decimation: { enabled: false },
-      // Zoom plugin configuration (applies only if plugin is registered)
-      zoom: zoomReady ? {
-        zoom: {
-          // Wheel zoom: disable on small screens; gentler speed on desktop
-          wheel: { enabled: !isSmallScreen, modifierKey: null, speed: 0.05 },
-          // Make mobile pinch less sensitive
-          pinch: { enabled: true, speed: isSmallScreen ? 0.15 : 0.4 },
-          mode: 'x',
-          drag: { enabled: false }
+  const trendData = React.useMemo(() => {
+    const pt = getLinePointMarkerDatasetStyle(isDark);
+    return {
+      labels: trendLabels,
+      datasets: [
+        {
+          label:
+            trendType === 'average'
+              ? 'Average score (complete days)'
+              : 'Composite (ranking-style)',
+          data: smooth ? smoothedValues : trendDataValues,
+          borderColor: primaryStroke,
+          backgroundColor: primaryFill,
+          pointStyle: 'circle',
+          pointRadius: (ctx) => {
+            const len = ctx.dataset.data?.length ?? 0;
+            const i = ctx.dataIndex;
+            if (len <= 1) return 4.5;
+            if (i === len - 1) return 4.5;
+            if (len <= 14) return 3;
+            return 0;
+          },
+          pointHoverRadius: 7,
+          pointHitRadius: 24,
+          pointBackgroundColor: pt.pointBackgroundColor,
+          pointBorderColor: pt.pointBorderColor,
+          pointBorderWidth: (ctx) => {
+            const len = ctx.dataset.data?.length ?? 0;
+            const i = ctx.dataIndex;
+            if (len <= 0) return 0;
+            return i === len - 1 || len <= 14 ? pt.pointBorderWidth : 0;
+          },
+          pointHoverBackgroundColor: pt.pointHoverBackgroundColor,
+          pointHoverBorderColor: pt.pointHoverBorderColor,
+          pointHoverBorderWidth: pt.pointHoverBorderWidth,
+          fill: true,
+          tension: smooth ? 0.46 : 0.34,
+          borderWidth: 2.75,
         },
-        pan: {
-          enabled: true,
-          mode: 'x',
-          // Higher threshold on mobile to avoid accidental pans
-          threshold: isSmallScreen ? 25 : 10,
-          speed: isSmallScreen ? 3 : 10
-        },
-        limits: {
-          // Prevent over-zooming into too few points on small screens
-          x: { min: 'original', max: 'original', minRange: isSmallScreen ? 6 : 3 },
-          y: { min: 0 }
-        }
-      } : undefined
-    },
-    elements: {
-      point: { radius: 0, hoverRadius: 0, hitRadius: 6, borderWidth: 0 }
-    },
-    scales: {
-      y: {
-        beginAtZero: false,
-        min: dynMin,
-        max: dynMax,
-        grid: { color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
-        ticks: { color: isDark ? '#9ca3af' : '#6b7280' }
-      },
-      x: {
-        grid: { display: false },
-        offset: true,
-        ticks: {
-          color: isDark ? '#9ca3af' : '#6b7280',
-          autoSkip: true,
-          maxTicksLimit: isSmallScreen ? 6 : 10,
-          maxRotation: isSmallScreen ? 60 : 0,
-          minRotation: isSmallScreen ? 45 : 0,
-          padding: isSmallScreen ? 8 : 4,
-        }
-      }
-    }
-  };
+      ],
+    };
+  }, [
+    trendLabels,
+    trendType,
+    smooth,
+    smoothedValues,
+    trendDataValues,
+    primaryStroke,
+    primaryFill,
+    isDark,
+  ]);
 
-  const pieOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'bottom',
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
-            if (context.label === 'Perfect Days') return `${context.label}: ${context.parsed} days (${percentage}%)`;
-            return `${context.label}: ${context.parsed} (${percentage}%)`;
+  const zoomConfig = React.useMemo(
+    () =>
+      zoomReady
+        ? {
+            zoom: {
+              wheel: { enabled: !isSmallScreen, modifierKey: null, speed: 0.05 },
+              pinch: { enabled: true, speed: isSmallScreen ? 0.15 : 0.4 },
+              mode: 'x',
+              drag: { enabled: false },
+            },
+            pan: {
+              enabled: true,
+              mode: 'x',
+              threshold: isSmallScreen ? 25 : 10,
+              speed: isSmallScreen ? 3 : 10,
+            },
+            limits: {
+              x: { min: 'original', max: 'original', minRange: isSmallScreen ? 6 : 3 },
+              y: { min: 0 },
+            },
           }
-        }
-      }
-    },
-    // Start pie from top
-    rotation: -Math.PI / 2,
-    elements: {
-      arc: {
-        borderWidth: 2,
-      }
+        : undefined,
+    [zoomReady, isSmallScreen]
+  );
+
+  const trendOptions = React.useMemo(() => {
+    const base = getLineChartOptions(isDark, {
+      yMin: dynMin,
+      yMax: dynMax,
+      xMaxTicks: isSmallScreen ? 5 : 8,
+      zoomConfig,
+    });
+    return {
+      ...base,
+      plugins: {
+        ...base.plugins,
+        tooltip: {
+          ...base.plugins.tooltip,
+          callbacks: {
+            ...base.plugins.tooltip.callbacks,
+            label(ctx) {
+              const val = ctx.parsed?.y;
+              const raw = typeof val === 'number' && Number.isFinite(val) ? val : 0;
+              const prefix = trendType === 'average' ? 'Average' : 'Composite';
+              const formatted =
+                trendType === 'average' ? raw.toFixed(0) : raw.toFixed(2);
+              return ` ${prefix}: ${formatted}`;
+            },
+          },
+        },
+      },
+      scales: {
+        ...base.scales,
+        x: {
+          ...base.scales.x,
+          ticks: {
+            ...base.scales.x.ticks,
+            maxRotation: isSmallScreen ? 32 : 0,
+            minRotation: isSmallScreen ? 28 : 0,
+            padding: isSmallScreen ? 10 : 6,
+          },
+        },
+      },
+    };
+  }, [isDark, dynMin, dynMax, isSmallScreen, zoomConfig, trendType]);
+
+  const trendNarrative = React.useMemo(() => {
+    const series = smooth ? smoothedValues : trendDataValues;
+    if (!series || series.length < 2) return null;
+    const first = series[0];
+    const last = series[series.length - 1];
+    if (!Number.isFinite(first) || !Number.isFinite(last)) return null;
+    const delta = last - first;
+    const up = delta > 0.5;
+    const down = delta < -0.5;
+    const label = trendType === 'average' ? 'average day score' : 'composite trajectory';
+    if (up) {
+      return `Over this window, your ${label} climbed from ${trendType === 'average' ? first.toFixed(0) : first.toFixed(1)} to ${trendType === 'average' ? last.toFixed(0) : last.toFixed(1)}.`;
     }
-  };
+    if (down) {
+      return `Over this window, your ${label} eased from ${trendType === 'average' ? first.toFixed(0) : first.toFixed(1)} toward ${trendType === 'average' ? last.toFixed(0) : last.toFixed(1)}—small resets are part of the path.`;
+    }
+    return `Your ${label} stayed steady—consistency often matters more than spikes.`;
+  }, [smooth, smoothedValues, trendDataValues, trendType]);
+
+  const glanceInsights = React.useMemo(() => {
+    if (!stats || !atAGlance) return [];
+    const items = [];
+    const { best } = deriveSalahAdherenceInsights(stats.prayerTypeStats);
+    if (best.length >= 2) {
+      items.push({
+        key: 'salah',
+        title: 'Salah pattern',
+        body: `You are steadiest with ${best[0].label} and ${best[1].label} in this view.`,
+      });
+    } else if (best.length === 1) {
+      items.push({
+        key: 'salah',
+        title: 'Salah pattern',
+        body: `You are steadiest with ${best[0].label} in this view.`,
+      });
+    }
+    if (Math.abs(atAGlance.consistencyDelta7d) >= 0.35) {
+      const up = atAGlance.consistencyDelta7d > 0;
+      items.push({
+        key: 'delta',
+        title: 'Week over week',
+        body: up
+          ? `Overall consistency is roughly ${atAGlance.consistencyDelta7d.toFixed(1)} points higher than the prior 7 days.`
+          : `Consistency eased about ${Math.abs(atAGlance.consistencyDelta7d).toFixed(1)} points versus the prior week—useful signal, not a verdict.`,
+      });
+    }
+    if (stats.currentStreak >= 3 && stats.bestStreak > 0) {
+      items.push({
+        key: 'streak',
+        title: 'Streak',
+        body:
+          stats.currentStreak >= stats.bestStreak
+            ? `You are on your best run yet (${stats.currentStreak} days)—one careful day at a time.`
+            : `Current streak (${stats.currentStreak} days); personal best is ${stats.bestStreak}. The gap closes quietly when the days line up.`,
+      });
+    }
+    return items;
+  }, [stats, atAGlance]);
 
   const getTimeframeLabel = () => {
     switch (timeframe) {
@@ -710,48 +815,76 @@ const Progress = () => {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-3 sm:p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-primary-600"></div>
-        </div>
+      <div
+        className="flex items-center justify-center min-h-[40vh] px-4"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <AnalyticsCard className="w-full max-w-md py-16 flex flex-col items-center gap-5">
+          <div
+            className="h-10 w-10 rounded-full border-2 border-jj-border/80 border-t-jj-accent dark:border-white/12 dark:border-t-teal-300 animate-spin"
+            aria-hidden
+          />
+          <p className="text-sm font-medium text-jj-muted dark:text-stone-400 tracking-tight">
+            Gathering your insights…
+          </p>
+        </AnalyticsCard>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="space-y-6 sm:space-y-8 px-1">
+        <EmptyStateCard
+          icon={Calendar}
+          title="No analytics yet"
+          body="Sign in and track a few full days to unlock charts and gentle summaries."
+        />
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl sm:rounded-2xl p-4 sm:p-6">
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <div>
-            <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Your Spiritual Journey</h1>
-            <p className="text-primary-100 text-sm sm:text-base">Track your progress and celebrate your growth</p>
+    <div className="space-y-7 sm:space-y-9 lg:space-y-10">
+      <section className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 shadow-jj dark:shadow-jj-dark ring-1 ring-black/[0.045] dark:ring-white/[0.08] p-5 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
+          <div className="min-w-0">
+            <p className="jj-eyebrow">Insights</p>
+            <h1 className="text-[1.625rem] sm:text-[1.875rem] font-semibold tracking-[-0.02em] text-jj-ink dark:text-stone-50 mt-2 leading-tight text-balance">
+              Clarity for your salāh
+            </h1>
+            <p className="text-sm sm:text-[0.9375rem] text-jj-muted dark:text-stone-400 mt-3 max-w-xl leading-relaxed text-pretty">
+              Analytics built around complete days—calm signal to support return, not performance.
+            </p>
           </div>
-
-          <TrendingUp className="w-8 h-8 sm:w-12 sm:h-12 text-primary-200" />
+          <div className="hidden sm:flex h-14 w-14 shrink-0 rounded-jj-lg bg-gradient-to-b from-teal-50 to-white dark:from-teal-950/40 dark:to-jj-surface-dark-2 items-center justify-center ring-1 ring-teal-900/8 dark:ring-teal-800/25">
+            <TrendingUp className="w-6 h-6 text-jj-accent dark:text-teal-300" strokeWidth={1.85} />
+          </div>
         </div>
 
-        {/* Time Frame Selector */}
-        <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
-          <div className="flex gap-1 sm:gap-2 w-full sm:w-auto">
+        <div className="mt-7 flex flex-col gap-5">
+          <div className="flex flex-wrap gap-1 p-1 rounded-jj-lg bg-jj-mist/75 dark:bg-white/[0.04] ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
             {[
-              { key: 'alltime', label: 'All Time', shortLabel: 'All' },
-              { key: 'recent', label: 'Last 30 Days', shortLabel: '30D' },
-              { key: 'month', label: 'Monthly', shortLabel: 'Month' },
-              { key: 'year', label: 'Yearly', shortLabel: 'Year' }
-            ].map(option => (
+              { key: 'alltime', label: 'All time', shortLabel: 'All' },
+              { key: 'recent', label: 'Last 30 days', shortLabel: '30d' },
+              { key: 'month', label: 'Month', shortLabel: 'Mo' },
+              { key: 'year', label: 'Year', shortLabel: 'Yr' },
+            ].map((option) => (
               <button
                 key={option.key}
+                type="button"
                 onClick={() => {
                   setTimeframe(option.key);
                   if (currentUser) {
                     localStorage.setItem(`progress_timeframe_${currentUser.uid}`, option.key);
                   }
                 }}
-                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-colors text-xs sm:text-sm flex-1 sm:flex-none ${
+                className={`flex-1 min-w-[4.5rem] sm:flex-none min-h-11 px-3 py-2.5 rounded-jj text-xs sm:text-sm font-semibold transition-all duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-mist dark:focus-visible:ring-offset-jj-surface-dark-2 ${
                   timeframe === option.key
-                    ? 'bg-white text-primary-700 dark:bg-primary-700 dark:text-white dark:border dark:border-primary-600'
-                    : 'bg-primary-500 text-white hover:bg-primary-400'
+                    ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-jj-card dark:shadow-none ring-1 ring-black/[0.06] dark:ring-white/[0.1]'
+                    : 'text-jj-muted dark:text-stone-400 hover:text-jj-ink dark:hover:text-stone-200'
                 }`}
               >
                 <span className="sm:hidden">{option.shortLabel}</span>
@@ -760,35 +893,57 @@ const Progress = () => {
             ))}
           </div>
 
-          {timeframe === 'month' && (
-            <div className="flex gap-2">
-              <select
-                value={selectedMonth}
-                onChange={(e) => {
-                  const month = parseInt(e.target.value);
-                  setSelectedMonth(month);
-                  if (currentUser) {
-                    localStorage.setItem(`progress_month_${currentUser.uid}`, month.toString());
-                  }
-                }}
-                className="bg-primary-500 text-white rounded-lg px-3 py-2 border border-primary-400 dark:bg-black dark:text-gray-200 dark:border-gray-700"
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {new Date(2024, i).toLocaleDateString('en-US', { month: 'long' })}
-                  </option>
-                ))}
-              </select>
+          <div className="flex flex-wrap gap-2 items-center">
+            {timeframe === 'month' && (
+              <>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => {
+                    const month = parseInt(e.target.value, 10);
+                    setSelectedMonth(month);
+                    if (currentUser) {
+                      localStorage.setItem(`progress_month_${currentUser.uid}`, month.toString());
+                    }
+                  }}
+                  className="text-sm rounded-jj min-h-11 border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark px-3.5 py-2 text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {new Date(2024, i).toLocaleDateString('en-US', { month: 'long' })}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => {
+                    const year = parseInt(e.target.value, 10);
+                    setSelectedYear(year);
+                    if (currentUser) {
+                      localStorage.setItem(`progress_year_${currentUser.uid}`, year.toString());
+                    }
+                  }}
+                  className="text-sm rounded-jj min-h-11 border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark px-3.5 py-2 text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
+                >
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <option key={2024 + i} value={2024 + i}>
+                      {2024 + i}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+
+            {timeframe === 'year' && (
               <select
                 value={selectedYear}
                 onChange={(e) => {
-                  const year = parseInt(e.target.value);
+                  const year = parseInt(e.target.value, 10);
                   setSelectedYear(year);
                   if (currentUser) {
                     localStorage.setItem(`progress_year_${currentUser.uid}`, year.toString());
                   }
                 }}
-                className="bg-primary-500 text-white rounded-lg px-3 py-2 border border-primary-400 dark:bg-black dark:text-gray-200 dark:border-gray-700"
+                className="text-sm rounded-jj min-h-11 border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark px-3.5 py-2 text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
               >
                 {Array.from({ length: 5 }, (_, i) => (
                   <option key={2024 + i} value={2024 + i}>
@@ -796,128 +951,129 @@ const Progress = () => {
                   </option>
                 ))}
               </select>
-            </div>
-          )}
+            )}
 
-          {timeframe === 'year' && (
-            <select
-              value={selectedYear}
-              onChange={(e) => {
-                const year = parseInt(e.target.value);
-                setSelectedYear(year);
-                if (currentUser) {
-                  localStorage.setItem(`progress_year_${currentUser.uid}`, year.toString());
-                }
-              }}
-              className="bg-primary-500 text-white rounded-lg px-3 py-2 border border-primary-400 dark:bg-black dark:text-gray-200 dark:border-gray-700"
-            >
-              {Array.from({ length: 5 }, (_, i) => (
-                <option key={2024 + i} value={2024 + i}>
-                  {2024 + i}
-                </option>
-              ))}
-            </select>
-          )}
+            <p className="text-sm text-jj-muted dark:text-stone-400 sm:ml-auto">
+              Viewing <span className="font-medium text-jj-ink dark:text-stone-200">{getTimeframeLabel()}</span>
+            </p>
+          </div>
         </div>
+      </section>
 
-        <div className="mt-4">
-          <h2 className="text-xl font-semibold">{getTimeframeLabel()}</h2>
-        </div>
-      </div>
+      <>
+        <AnalyticsSection labelledBy="progress-kpi-title">
+          <SectionHeader
+            id="progress-kpi"
+            eyebrow="Overview"
+            title="At a glance"
+            description="A quiet read on rhythm, not a scorecard—every figure respects the same complete-day rules as your journal."
+          />
 
-      {stats && (
-        <>
-          {/* Trend Line Chart moved to bottom */}
-
-          {/* Key Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-            <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 shadow-lg border border-gray-100 glass-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-xs sm:text-sm font-medium">Completed Days</p>
-                  <p className="text-xl sm:text-3xl font-bold text-gray-900">{stats.totalDays}</p>
-                </div>
-                <Calendar className="w-5 h-5 sm:w-8 sm:h-8 text-blue-500" />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 shadow-lg border border-gray-100 glass-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-xs sm:text-sm font-medium">Consistency</p>
-                  <p className="text-xl sm:text-3xl font-bold text-green-600">{(stats.consistency || 0).toFixed(1)}%</p>
-                </div>
-                <Target className="w-5 h-5 sm:w-8 sm:h-8 text-green-500" />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 shadow-lg border border-gray-100 glass-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-xs sm:text-sm font-medium">Current Streak</p>
-                  <p className="text-xl sm:text-3xl font-bold text-blue-600">{stats.currentStreak}</p>
-                  <p className="text-xs text-gray-500">days</p>
-                </div>
-                <Zap className="w-5 h-5 sm:w-8 sm:h-8 text-blue-500" />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 shadow-lg border border-gray-100 glass-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-xs sm:text-sm font-medium">Best Streak</p>
-                  <p className="text-xl sm:text-3xl font-bold text-orange-600">{stats.bestStreak}</p>
-                  <p className="text-xs text-gray-500">days</p>
-                </div>
-                <Flame className="w-5 h-5 sm:w-8 sm:h-8 text-orange-500" />
-              </div>
-            </div>
-
-            {/* Masjid % or Surah Al-Kahf Consistency (conditional) */}
-            <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 shadow-lg border border-gray-100 glass-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  {masjidMode ? (
-                    <>
-                      <p className="text-gray-600 text-xs sm:text-sm font-medium">Surah Al-Kahf Consistency</p>
-                      <p className="text-xl sm:text-3xl font-bold text-purple-600">{(stats.surahAlKahfStats?.consistency || 0).toFixed(1)}%</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-gray-600 text-xs sm:text-sm font-medium">Masjid Percentage</p>
-                      <p className="text-xl sm:text-3xl font-bold text-blue-600">{(stats.masjidPercentage || 0).toFixed(1)}%</p>
-                    </>
-                  )}
-                </div>
-                {masjidMode ? (
-                  <Book className="w-5 h-5 sm:w-8 sm:h-8 text-purple-500" />
-                ) : (
-                  <Church className="w-5 h-5 sm:w-8 sm:h-8 text-blue-500" />
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-6 shadow-lg border border-gray-100 glass-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-xs sm:text-sm font-medium">Average Score</p>
-                  <p className="text-xl sm:text-3xl font-bold text-purple-600">{(stats.averageScore || 0).toFixed(2)}</p>
-                </div>
-                <Award className="w-5 h-5 sm:w-8 sm:h-8 text-purple-500" />
-              </div>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
+            <KPIStatCard
+              label="Overall consistency"
+              value={`${(stats.consistency || 0).toFixed(1)}%`}
+              hint="Prayers accounted for on completed days"
+              icon={Target}
+              emphasize
+              className="col-span-2 md:col-span-3"
+            />
+            <KPIStatCard
+              label="Current streak"
+              value={stats.currentStreak}
+              hint="Days with strong completion in this window"
+              icon={Zap}
+            />
+            <KPIStatCard label="Longest streak" value={stats.bestStreak} hint="Personal best run" icon={Flame} />
+            <KPIStatCard
+              label="This calendar week"
+              value={atAGlance != null ? atAGlance.weekAddressed : '—'}
+              hint="Prayer slots addressed (not left unmarked)"
+              icon={Calendar}
+            />
+            <KPIStatCard
+              label="Month through today"
+              value={atAGlance != null ? atAGlance.monthAddressed : '—'}
+              hint="Prayer slots with a logged status"
+              icon={Calendar}
+            />
+            <KPIStatCard
+              label="Consistency vs prior week"
+              value={
+                atAGlance != null
+                  ? `${atAGlance.consistencyDelta7d >= 0 ? '+' : ''}${atAGlance.consistencyDelta7d.toFixed(1)} pts`
+                  : '—'
+              }
+              hint="Rolling 7 days vs the 7 before (same metrics as overview)"
+              icon={TrendingUp}
+              className="col-span-2 md:col-span-1"
+            />
           </div>
 
-          {/* Surah Al-Kahf Friday Tracking */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
+            <KPIStatCard
+              label="Completed days"
+              value={stats.totalDays}
+              hint="Fully logged days in this view"
+              icon={Calendar}
+            />
+            <KPIStatCard
+              label={masjidMode ? 'Surah al‑Kahf' : 'Masjid share'}
+              value={
+                masjidMode
+                  ? `${(stats.surahAlKahfStats?.consistency || 0).toFixed(1)}%`
+                  : `${(stats.masjidPercentage || 0).toFixed(1)}%`
+              }
+              hint={masjidMode ? 'Friday rhythm (when tracked)' : 'Of completed prayers in congregation'}
+              icon={masjidMode ? Book : Church}
+            />
+            <KPIStatCard
+              label="Average score"
+              value={(stats.averageScore || 0).toFixed(2)}
+              hint="Per completed day"
+              icon={Award}
+              className="col-span-2 lg:col-span-1"
+            />
+          </div>
+
+          {stats.totalDays < 1 && stats.totalPrayers < 1 && (
+            <InsightCallout title="Early days">
+              Track a few full days to unlock richer charts and calmer insights—empty space is expected when you are just starting.
+            </InsightCallout>
+          )}
+
+          {(glanceInsights.length > 0 || atAGlance?.weekdayMissText) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {glanceInsights.map((gi) => (
+                <InsightCallout key={gi.key} title={gi.title}>
+                  {gi.body}
+                </InsightCallout>
+              ))}
+              {atAGlance?.weekdayMissText && (
+                <InsightCallout key="weekday-miss" title="Rhythm">
+                  {atAGlance.weekdayMissText}
+                </InsightCallout>
+              )}
+            </div>
+          )}
+        </AnalyticsSection>
+
+        {trendNarrative && trendDataValues.length > 0 && (
+          <InsightCallout title="Trajectory read">{trendNarrative}</InsightCallout>
+        )}
+
           {stats.surahAlKahfStats.totalFridays > 0 && (
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 sm:p-6 border border-purple-200 dark:from-black dark:to-black dark:border-gray-800">
-              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
-                <Book className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
-                Surah Al-Kahf (Friday Special)
+            <div className="rounded-3xl border border-jj-border/80 dark:border-white/10 bg-jj-surface dark:bg-jj-surface-dark p-5 sm:p-7 shadow-sm">
+              <h3 className="text-base sm:text-lg font-semibold text-jj-ink dark:text-stone-100 mb-2 flex items-center gap-2">
+                <Book className="w-5 h-5 text-violet-800 dark:text-violet-200" strokeWidth={1.75} />
+                Friday · Surah al‑Kahf
               </h3>
+              <p className="text-sm text-jj-muted dark:text-stone-500 mb-4 sm:mb-5">
+                Tracked only on Fridays you fully completed elsewhere in the journal.
+              </p>
               
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-4">
-                <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-purple-100 dark:bg-[#0a0a0a] dark:border-gray-800">
+                <div className="rounded-2xl p-3 sm:p-4 border border-jj-border/70 dark:border-white/10 bg-white/70 dark:bg-black/25">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-600 text-xs sm:text-sm font-medium">Total Fridays</p>
@@ -927,7 +1083,7 @@ const Progress = () => {
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-purple-100 dark:bg-[#0a0a0a] dark:border-gray-800">
+                <div className="rounded-2xl p-3 sm:p-4 border border-jj-border/70 dark:border-white/10 bg-white/70 dark:bg-black/25">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-600 text-xs sm:text-sm font-medium">Recited</p>
@@ -937,7 +1093,7 @@ const Progress = () => {
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-purple-100 dark:bg-[#0a0a0a] dark:border-gray-800">
+                <div className="rounded-2xl p-3 sm:p-4 border border-jj-border/70 dark:border-white/10 bg-white/70 dark:bg-black/25">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-600 text-xs sm:text-sm font-medium">Missed</p>
@@ -947,7 +1103,7 @@ const Progress = () => {
                   </div>
                 </div>
                 
-                <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-purple-100 dark:bg-[#0a0a0a] dark:border-gray-800">
+                <div className="rounded-2xl p-3 sm:p-4 border border-jj-border/70 dark:border-white/10 bg-white/70 dark:bg-black/25">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-600 text-xs sm:text-sm font-medium">Consistency</p>
@@ -959,9 +1115,9 @@ const Progress = () => {
               </div>
               
               {/* Surah Al-Kahf Progress Bar */}
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-purple-100 dark:bg-[#0a0a0a] dark:border-gray-800 glass-card">
+              <div className="rounded-2xl p-4 border border-jj-border/70 dark:border-white/10 bg-white/70 dark:bg-black/25">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">Friday Reading Progress</span>
+                  <span className="text-sm font-medium text-jj-ink dark:text-stone-200">Friday completion</span>
                   <span className="text-sm text-gray-600">
                     {stats.surahAlKahfStats.recited} / {stats.surahAlKahfStats.totalFridays} Fridays
                   </span>
@@ -974,34 +1130,36 @@ const Progress = () => {
                     }}
                   ></div>
                 </div>
-                <div className="mt-2 text-xs text-gray-600">
+                <div className="mt-2 text-xs text-jj-muted dark:text-stone-500">
                   {stats.surahAlKahfStats.consistency >= 80 ? (
-                    <span className="text-green-600 font-medium">🌟 Excellent consistency! Keep up the blessed habit!</span>
+                    <span className="text-emerald-800 dark:text-emerald-200 font-medium">Strong Friday rhythm in this window.</span>
                   ) : stats.surahAlKahfStats.consistency >= 60 ? (
-                    <span className="text-blue-600 font-medium">📚 Good progress! Try to be more consistent.</span>
+                    <span className="text-jj-ink dark:text-stone-300 font-medium">A workable baseline—protect the next Friday early.</span>
                   ) : (
-                    <span className="text-orange-600 font-medium">🤲 Every Friday is a new opportunity for blessings.</span>
+                    <span className="text-jj-muted dark:text-stone-400 font-medium">If you miss, log it honestly; the line only reflects what you already chose to record.</span>
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Motivational Insights */}
           {insights.length > 0 && (
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 dark:from-black dark:to-black">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Star className="w-6 h-6 text-yellow-500" />
-                Your Achievements & Insights
+            <div className="rounded-3xl border border-jj-border/80 dark:border-white/10 bg-jj-surface dark:bg-jj-surface-dark p-5 sm:p-7 shadow-sm">
+              <h3 className="text-base sm:text-lg font-semibold text-jj-ink dark:text-stone-100 mb-2 flex items-center gap-2">
+                <Star className="w-5 h-5 text-jj-gold dark:text-amber-200" strokeWidth={1.75} />
+                Reflections
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <p className="text-sm text-jj-muted dark:text-stone-500 mb-4">
+                Short reads based on your completed-day window—companions to the charts, not a grade.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {insights.map((insight, index) => (
-                  <div key={index} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 dark:bg-[#0a0a0a] dark:border-gray-800">
+                  <div key={index} className="rounded-2xl p-4 border border-jj-border/70 dark:border-white/10 bg-white/70 dark:bg-black/25">
                     <div className="flex items-start gap-3">
                       {getInsightIcon(insight.type)}
                       <div>
-                        <h4 className="font-semibold text-gray-800 mb-1">{insight.title}</h4>
-                        <p className="text-gray-600 text-sm">{insight.message}</p>
+                        <h4 className="font-semibold text-jj-ink dark:text-stone-100 mb-1">{insight.title}</h4>
+                        <p className="text-jj-muted dark:text-stone-400 text-sm leading-relaxed">{insight.message}</p>
                       </div>
                     </div>
                   </div>
@@ -1010,42 +1168,60 @@ const Progress = () => {
             </div>
           )}
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Prayer Breakdown Pie Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 dark:bg-black dark:border-gray-800 glass-card">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Prayer Status Breakdown</h3>
-              {prayerBreakdownData && stats.totalPrayers > 0 ? (
-                <Pie data={prayerBreakdownData} options={pieOptions} />
-              ) : (
-                <div className="flex items-center justify-center h-64 text-gray-500">
-                  <div className="text-center">
-                    <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                    <p>No prayer data available</p>
-                  </div>
+        <AnalyticsSection labelledBy="charts-breakdown-title" className="space-y-5 sm:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+            <ChartCard
+              id="charts-breakdown"
+              eyebrow="Completed days"
+              title="Where effort landed"
+              description="How complete days distribute across status—horizontal layout, one row per category, easy to scan on a phone."
+              minHeightClass="min-h-[232px] sm:min-h-[272px]"
+            >
+              {statusBarData && stats.totalPrayers > 0 ? (
+                <div className="h-[232px] sm:h-[272px] w-full" role="img" aria-label="Prayer status counts bar chart">
+                  <Bar data={statusBarData} options={statusBarOptions} />
                 </div>
+              ) : (
+                <EmptyStateCard
+                  className="border-0 shadow-none bg-transparent py-8"
+                  icon={Calendar}
+                  title="No breakdown yet"
+                  body="Complete a full day in this range to see how your statuses balance."
+                />
               )}
-            </div>
+            </ChartCard>
 
-            {/* Prayer Type Bar Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 dark:bg-black dark:border-gray-800 glass-card">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Prayer-wise Performance</h3>
+            <ChartCard
+              id="charts-per-prayer"
+              eyebrow="Adherence"
+              title="Prayer-by-prayer pattern"
+              description="Fajr through Isha—stacked counts on completed days only, with restrained color so the shape carries the story."
+              minHeightClass="min-h-[256px] sm:min-h-[300px]"
+            >
               {prayerTypeData && stats.totalPrayers > 0 ? (
-                <Bar data={prayerTypeData} options={chartOptions} />
-              ) : (
-                <div className="flex items-center justify-center h-64 text-gray-500">
-                  <div className="text-center">
-                    <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                    <p>No prayer data available</p>
-                  </div>
+                <div className="h-[256px] sm:h-[300px] w-full" role="img" aria-label="Stacked prayer status by salah">
+                  <Bar data={prayerTypeData} options={barOptions} />
                 </div>
+              ) : (
+                <EmptyStateCard
+                  className="border-0 shadow-none bg-transparent py-8"
+                  icon={TrendingUp}
+                  title="Pattern unlocks with data"
+                  body="Once you log complete days, this view highlights where the five prayers cluster."
+                />
               )}
-            </div>
+            </ChartCard>
           </div>
+        </AnalyticsSection>
 
-          {/* Detailed Breakdown */}
-          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-100 dark:bg-black dark:border-gray-800 glass-card">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6">Detailed Statistics</h3>
+        <AnalyticsSection labelledBy="status-totals-title">
+          <SectionHeader
+            id="status-totals"
+            eyebrow="Snapshot"
+            title="Status totals"
+            description="Percentages sit beside raw counts—both reference only prayers on completed days in this timeframe."
+          />
+          <AnalyticsCard className="p-5 sm:p-7 shadow-sm border-jj-border/80 dark:border-white/10">
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               {masjidMode ? (
                 // Home Prayer Mode: show Home, Qaza, Not Prayed, then Surah Al-Kahf last
@@ -1138,106 +1314,152 @@ const Progress = () => {
                 </>
               )}
             </div>
-          </div>
+          </AnalyticsCard>
+        </AnalyticsSection>
 
-          {/* Progress Trend (Bottom) */}
-          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-gray-100 dark:bg-black dark:border-gray-800 glass-card">
-            <div className="mb-3">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Progress Trend</h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium ${trendType === 'average' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-900 dark:text-gray-200'}`}
-                  onClick={() => setTrendType('average')}
-                >
-                  Average Score
-                </button>
-                <button
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium ${trendType === 'composite' ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-900 dark:text-gray-200'}`}
-                  onClick={() => setTrendType('composite')}
-                >
-                  Composite Score
-                </button>
-                <div className="mx-2 w-px bg-gray-200 dark:bg-gray-800" />
-                <button
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium ${smooth ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-900 dark:text-gray-200'}`}
-                  onClick={() => setSmooth(s => !s)}
-                  title="Toggle smoothing (moving average)"
-                >
-                  {smooth ? 'Smooth: On' : 'Smooth: Off'}
-                </button>
-              </div>
+        <ChartCard
+          id="spark-week"
+          eyebrow="Last 7 days"
+          title="Weekly pulse"
+          description="Share of the five salāhs with any logged outcome other than not prayed—calendar context around your main range."
+          minHeightClass="min-h-[212px] sm:min-h-[236px]"
+        >
+          {sparkLineData ? (
+            <div className="h-[212px] sm:h-[236px] w-full" role="img" aria-label="Seven day prayer completion trend">
+              <Line data={sparkLineData} options={sparkLineOptions} />
             </div>
-            <div className="h-64">
-              {dailyTrend.length > 0 ? (
-                <Line ref={chartRef} data={trendData} options={trendOptions} />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center">
-                    <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                    <p>No completed day data in selected period</p>
-                  </div>
-                </div>
-              )}
+          ) : (
+            <EmptyStateCard
+              className="border-0 shadow-none bg-transparent py-8"
+              icon={Calendar}
+              title="Week view needs entries"
+              body="Log a few days this week to see the gentle seven-day line."
+            />
+          )}
+        </ChartCard>
+
+        <ChartCard
+          id="trajectory-main"
+          eyebrow="Selected range"
+          title="Trajectory"
+          description="Your average or composite line across this filter—zoom to inspect busy weeks; smoothing is optional, never the default truth."
+          minHeightClass="min-h-[292px]"
+          headerRight={
+            <div className="flex flex-wrap gap-1.5 justify-end max-w-full p-1 rounded-jj-lg bg-jj-mist/70 dark:bg-white/[0.04] ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+              <button
+                type="button"
+                className={`min-h-10 px-3.5 py-2 rounded-jj text-xs sm:text-sm font-semibold transition-all duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-mist dark:focus-visible:ring-offset-jj-surface-dark-2 ${
+                  trendType === 'average'
+                    ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-sm ring-1 ring-black/[0.06] dark:ring-white/[0.08]'
+                    : 'text-jj-muted dark:text-stone-400 hover:text-jj-ink dark:hover:text-stone-200'
+                }`}
+                onClick={() => setTrendType('average')}
+              >
+                Average
+              </button>
+              <button
+                type="button"
+                className={`min-h-10 px-3.5 py-2 rounded-jj text-xs sm:text-sm font-semibold transition-all duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-mist dark:focus-visible:ring-offset-jj-surface-dark-2 ${
+                  trendType === 'composite'
+                    ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-sm ring-1 ring-black/[0.06] dark:ring-white/[0.08]'
+                    : 'text-jj-muted dark:text-stone-400 hover:text-jj-ink dark:hover:text-stone-200'
+                }`}
+                onClick={() => setTrendType('composite')}
+              >
+                Composite
+              </button>
+              <button
+                type="button"
+                className={`min-h-10 px-3.5 py-2 rounded-jj text-xs sm:text-sm font-semibold transition-all duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-mist dark:focus-visible:ring-offset-jj-surface-dark-2 ${
+                  smooth
+                    ? 'bg-jj-ink text-white dark:bg-stone-200 dark:text-stone-900'
+                    : 'text-jj-muted dark:text-stone-400 hover:text-jj-ink dark:hover:text-stone-200'
+                }`}
+                onClick={() => setSmooth((s) => !s)}
+                title="Toggle smoothing (moving average)"
+              >
+                Smooth {smooth ? 'on' : 'off'}
+              </button>
             </div>
-            <div className="mt-2 sm:mt-3 flex items-center justify-between gap-2">
-              <div className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 px-2">
-                Smooth ON: 5-day avg (Average) / 7-day avg (Composite) for a clearer trend; OFF shows exact daily values
-              </div>
-              <div className="flex items-center gap-2">
+          }
+          footer={
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+              <p className="text-[11px] sm:text-xs text-jj-muted dark:text-stone-500 max-w-prose">
+                Smoothing uses a 5‑day window for averages and 7 for composite—turn it off to read exact daily values.
+              </p>
+              <div className="flex items-center gap-1.5 shrink-0 p-0.5 rounded-jj bg-jj-mist/60 dark:bg-white/[0.04] ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
                 <button
-                  className={`px-2.5 py-1.5 rounded-lg text-sm font-medium ${zoomReady ? 'bg-gray-100 dark:bg-gray-900 dark:text-gray-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                  type="button"
+                  className={`min-h-10 min-w-10 rounded-jj text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent transition-colors ${
+                    zoomReady
+                      ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-200 shadow-sm dark:shadow-none'
+                      : 'text-stone-400 cursor-not-allowed'
+                  }`}
                   disabled={!zoomReady}
                   onClick={() => {
                     try {
                       const chart = chartRef.current?.chart || chartRef.current;
-                      if (chart && typeof chart.zoom === 'function') {
-                        // Zoom out slightly
-                        chart.zoom(0.9);
-                      }
+                      if (chart && typeof chart.zoom === 'function') chart.zoom(0.9);
                     } catch {}
                   }}
-                  title="Zoom Out"
+                  aria-label="Zoom out chart"
                 >
-                  -
+                  −
                 </button>
                 <button
-                  className={`px-2.5 py-1.5 rounded-lg text-sm font-medium ${zoomReady ? 'bg-gray-100 dark:bg-gray-900 dark:text-gray-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                  type="button"
+                  className={`min-h-10 min-w-10 rounded-jj text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent transition-colors ${
+                    zoomReady
+                      ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-200 shadow-sm dark:shadow-none'
+                      : 'text-stone-400 cursor-not-allowed'
+                  }`}
                   disabled={!zoomReady}
                   onClick={() => {
                     try {
                       const chart = chartRef.current?.chart || chartRef.current;
-                      if (chart && typeof chart.zoom === 'function') {
-                        // Zoom in slightly
-                        chart.zoom(1.1);
-                      }
+                      if (chart && typeof chart.zoom === 'function') chart.zoom(1.1);
                     } catch {}
                   }}
-                  title="Zoom In"
+                  aria-label="Zoom in chart"
                 >
                   +
                 </button>
                 <button
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium ${zoomReady ? 'bg-gray-100 dark:bg-gray-900 dark:text-gray-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                  type="button"
+                  className={`min-h-10 px-3 rounded-jj text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent transition-colors ${
+                    zoomReady
+                      ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-200 shadow-sm dark:shadow-none'
+                      : 'text-stone-400 cursor-not-allowed'
+                  }`}
                   disabled={!zoomReady}
                   onClick={() => {
                     try {
                       const chart = chartRef.current?.chart || chartRef.current;
-                      if (chart && chart.resetZoom) {
-                        chart.resetZoom();
-                      } else if (chart && chart.chart && chart.chart.resetZoom) {
-                        chart.chart.resetZoom();
-                      }
+                      if (chart && chart.resetZoom) chart.resetZoom();
+                      else if (chart && chart.chart && chart.chart.resetZoom) chart.chart.resetZoom();
                     } catch {}
                   }}
-                  title={zoomReady ? 'Reset zoom to full range' : 'Zoom unavailable (plugin not installed)'}
                 >
-                  Reset Zoom
+                  Reset
                 </button>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          }
+        >
+          {trendDataValues.length > 0 ? (
+            <div className="h-[17.5rem] sm:h-[20rem] w-full" role="img" aria-label="Score trajectory chart">
+              <Line ref={chartRef} data={trendData} options={trendOptions} />
+            </div>
+          ) : (
+            <EmptyStateCard
+              className="border-0 shadow-none bg-transparent py-6"
+              icon={Calendar}
+              title="No line yet"
+              body="Finish at least one full day in this range to see how your average or composite moves."
+            />
+          )}
+        </ChartCard>
+      </>
     </div>
   );
 };

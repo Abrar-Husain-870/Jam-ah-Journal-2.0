@@ -277,37 +277,40 @@ const [userToDelete, setUserToDelete] = useState(null);
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
+    <div className="max-w-2xl mx-auto space-y-5 sm:space-y-7">
       {!online && (
-        <div className="rounded-lg border text-xs px-3 py-2 bg-amber-50 border-amber-200 text-amber-800 dark:bg-[#0a0a0a] dark:border-gray-800 dark:text-amber-300 flex items-center gap-2">
-          <Lock className="w-3.5 h-3.5" /> Offline: view-only. Edits disabled until connection is restored.
+        <div className="rounded-2xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/90 dark:bg-amber-950/35 text-amber-950 dark:text-amber-100 text-sm px-4 py-3 flex items-center gap-2">
+          <Lock className="w-4 h-4 shrink-0" strokeWidth={1.75} /> Offline: view-only until you reconnect.
         </div>
       )}
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-6">
-        <h1 className="text-2xl font-bold mb-2">Profile</h1>
-        <p className="text-primary-100">Manage your account and data</p>
+      <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.045] dark:ring-white/[0.08] shadow-jj dark:shadow-jj-dark p-6 sm:p-8">
+        <p className="jj-eyebrow">Account</p>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-jj-ink dark:text-stone-50 mt-1.5">
+          Settings
+        </h1>
+        <p className="text-sm text-jj-muted dark:text-stone-400 mt-2.5 leading-relaxed max-w-prose text-pretty">
+          Nickname, privacy, and data—kept plain and reversible where possible.
+        </p>
       </div>
 
-      {/* User Information */}
-      <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-100 dark:border-gray-800">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <User className="w-5 h-5" />
-          User Information
+      <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.045] dark:ring-white/[0.08] shadow-jj-card dark:shadow-jj-card-dark p-6 sm:p-8">
+        <h2 className="text-lg sm:text-xl font-semibold text-jj-ink dark:text-stone-100 mb-5 flex items-center gap-2.5">
+          <User className="w-5 h-5 text-jj-accent dark:text-teal-300 shrink-0" strokeWidth={1.75} />
+          Profile
         </h2>
         
         <div className="space-y-4">
           {/* Nickname */}
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Nickname</label>
+              <label className="block text-sm font-medium text-jj-muted dark:text-stone-400 mb-1.5">Nickname</label>
               {editingNickname ? (
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={newNickname}
                     onChange={(e) => setNewNickname(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="flex-1 min-h-11 px-3.5 py-2 rounded-jj border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
                     placeholder="Enter nickname"
                   />
                   <button
@@ -326,10 +329,11 @@ const [userToDelete, setUserToDelete] = useState(null);
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <p className="text-lg text-gray-900">{userNickname}</p>
+                  <p className="text-lg font-medium text-jj-ink dark:text-stone-100">{userNickname}</p>
                   <button
+                    type="button"
                     onClick={handleNicknameEdit}
-                    className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg"
+                    className="p-2 text-jj-muted hover:text-jj-ink dark:text-stone-400 dark:hover:text-stone-200 rounded-jj hover:bg-jj-mist/60 dark:hover:bg-white/[0.05]"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
@@ -340,33 +344,33 @@ const [userToDelete, setUserToDelete] = useState(null);
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-jj-muted dark:text-stone-400 mb-1.5">Email</label>
             <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-gray-400" />
-              <p className="text-lg text-gray-900">{currentUser.email}</p>
+              <Mail className="w-4 h-4 text-jj-muted opacity-80 shrink-0" strokeWidth={1.75} />
+              <p className="text-base sm:text-lg text-jj-ink dark:text-stone-100 break-all">{currentUser.email}</p>
             </div>
           </div>
 
           {/* Total Days Tracked */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Total Days Tracked</label>
+            <label className="block text-sm font-medium text-jj-muted dark:text-stone-400 mb-1.5">Total days tracked</label>
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <p className="text-lg text-gray-900">{totalDaysTracked} days</p>
+              <Calendar className="w-4 h-4 text-jj-muted opacity-80 shrink-0" strokeWidth={1.75} />
+              <p className="text-lg font-medium tabular-nums text-jj-ink dark:text-stone-100">{totalDaysTracked} days</p>
             </div>
           </div>
 
           {/* Privacy Toggle */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">Global Leaderboard Privacy</label>
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-gray-500" />
+            <label className="block text-sm font-medium text-jj-muted dark:text-stone-400 mb-2">Global leaderboard privacy</label>
+            <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-jj-mist/50 dark:bg-white/[0.04] rounded-jj-xl ring-1 ring-black/[0.04] dark:ring-white/[0.07]">
+              <div className="flex items-center gap-3 min-w-0">
+                <Shield className="w-5 h-5 text-jj-accent dark:text-teal-300 shrink-0" strokeWidth={1.75} />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Private Mode
+                  <p className="text-sm font-semibold text-jj-ink dark:text-stone-100">
+                    Private mode
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-jj-muted dark:text-stone-400 mt-0.5 leading-snug">
                     {isPrivacyEnabled 
                       ? 'Hidden from global leaderboards (friends can still see you)' 
                       : 'Visible on global leaderboards'
@@ -378,8 +382,8 @@ const [userToDelete, setUserToDelete] = useState(null);
                 onClick={handlePrivacyToggle}
                 disabled={loading || !online}
                 title={!online ? 'Offline: view-only' : ''}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                  isPrivacyEnabled ? 'bg-primary-600' : 'bg-gray-300'
+                className={`relative inline-flex h-7 w-12 items-center shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
+                  isPrivacyEnabled ? 'bg-jj-accent dark:bg-teal-600' : 'bg-jj-mist dark:bg-white/15'
                 } ${!online ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 <span
@@ -391,26 +395,26 @@ const [userToDelete, setUserToDelete] = useState(null);
                 />
               </button>
             </div>
-            <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-jj-muted dark:text-stone-500">
               {isPrivacyEnabled ? (
-                <><EyeOff className="w-3 h-3" /> Your data is hidden from global leaderboards</>
+                <><EyeOff className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} /> Hidden from global boards; friends may still see you.</>
               ) : (
-                <><Eye className="w-3 h-3" /> Your data is visible on global leaderboards</>
+                <><Eye className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} /> Visible on global leaderboards.</>
               )}
             </div>
           </div>
 
           {/* Masjid Mode Toggle */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">Prayer Scoring Mode</label>
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Building className="w-5 h-5 text-gray-500" />
+            <label className="block text-sm font-medium text-jj-muted dark:text-stone-400 mb-2">Prayer scoring mode</label>
+            <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-jj-mist/50 dark:bg-white/[0.04] rounded-jj-xl ring-1 ring-black/[0.04] dark:ring-white/[0.07]">
+              <div className="flex items-center gap-3 min-w-0">
+                <Building className="w-5 h-5 text-jj-accent dark:text-teal-300 shrink-0" strokeWidth={1.75} />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    Home Prayer Mode
+                  <p className="text-sm font-semibold text-jj-ink dark:text-stone-100">
+                    Home prayer mode
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-jj-muted dark:text-stone-400 mt-0.5 leading-snug">
                     {isMasjidModeEnabled 
                       ? 'Optimized for home prayers (Qaza: 13pts, Prayed: 27pts)' 
                       : 'Standard scoring (Qaza: 0.5pts, Home: 1pt, Masjid: 27pts)'
@@ -422,8 +426,8 @@ const [userToDelete, setUserToDelete] = useState(null);
                 onClick={handleMasjidModeToggle}
                 disabled={loading || !online}
                 title={!online ? 'Offline: view-only' : ''}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                  isMasjidModeEnabled ? 'bg-green-600' : 'bg-gray-300'
+                className={`relative inline-flex h-7 w-12 items-center shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
+                  isMasjidModeEnabled ? 'bg-jj-accent dark:bg-teal-600' : 'bg-jj-mist dark:bg-white/15'
                 } ${!online ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 <span
@@ -435,29 +439,27 @@ const [userToDelete, setUserToDelete] = useState(null);
                 />
               </button>
             </div>
-            <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-jj-muted dark:text-stone-500">
               {isMasjidModeEnabled ? (
-                <><Building className="w-3 h-3" /> Home prayer mode active - fair scoring for all users</>
+                <><Building className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} /> Home-optimized scoring is on.</>
               ) : (
-                <><Building className="w-3 h-3" /> Standard mode - includes masjid prayer bonus</>
+                <><Building className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} /> Standard scoring includes masjid weighting.</>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* App Updates */}
       <RefreshAppButton />
 
-      {/* Data Management */}
-      <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-100 dark:border-gray-800">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <Database className="w-5 h-5" />
-          Data Management
+      <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.045] dark:ring-white/[0.08] shadow-jj-card dark:shadow-jj-card-dark p-6 sm:p-8">
+        <h2 className="text-lg sm:text-xl font-semibold text-jj-ink dark:text-stone-100 mb-4 flex items-center gap-2.5">
+          <Database className="w-5 h-5 text-jj-accent dark:text-teal-300 shrink-0" strokeWidth={1.75} />
+          Data management
         </h2>
         
         <div className="space-y-4">
-          <p className="text-gray-600">Clear your prayer tracking data for specific periods or all data.</p>
+          <p className="text-sm text-jj-muted dark:text-stone-400 leading-relaxed">Clear prayer data for a period or all at once—use only when you mean it.</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <button
@@ -488,15 +490,14 @@ const [userToDelete, setUserToDelete] = useState(null);
         </div>
       </div>
 
-      {/* Account Actions */}
-      <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-100 dark:border-gray-800">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" />
-          Account Actions
+      <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.045] dark:ring-white/[0.08] shadow-jj-card dark:shadow-jj-card-dark p-6 sm:p-8">
+        <h2 className="text-lg sm:text-xl font-semibold text-jj-ink dark:text-stone-100 mb-4 flex items-center gap-2.5">
+          <AlertTriangle className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0" strokeWidth={1.75} />
+          Account actions
         </h2>
         
         <div className="space-y-4">
-          <p className="text-gray-600">Permanently delete your account and all associated data.</p>
+          <p className="text-sm text-jj-muted dark:text-stone-400 leading-relaxed">Permanently delete your account and all associated data.</p>
           
           <button
             onClick={() => setShowDeleteConfirm(true)}
@@ -512,8 +513,8 @@ const [userToDelete, setUserToDelete] = useState(null);
 
       {/* Clear Data Modal */}
       {showClearDataModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Clear {clearDataType === 'all' ? 'All' : clearDataType === 'year' ? 'Year' : 'Month'} Data
             </h3>
@@ -592,8 +593,8 @@ const [userToDelete, setUserToDelete] = useState(null);
 
       {/* Delete Account Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Delete Account</h3>
             <p className="text-gray-600 mb-6">
               This will permanently delete your account and all your prayer tracking data. 

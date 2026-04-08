@@ -562,63 +562,60 @@ export const getMotivationalInsights = (stats) => {
   if (stats.totalTrackedDays === 0) {
     insights.push({
       type: 'encouragement',
-      title: 'Start Your Journey! 🌟',
-      message: 'Begin tracking your prayers today and watch your spiritual growth unfold!'
+      title: 'Begin with one honest day',
+      message: 'Mark what you can, when you can. A single clear day becomes a pattern.',
     });
     return insights;
   }
 
-  // Consistency insights
   if (stats.consistency >= 90) {
     insights.push({
       type: 'praise',
-      title: 'Outstanding Consistency! 🏆',
-      message: `You've maintained ${stats.consistency.toFixed(1)}% prayer consistency. Keep up the excellent work!`
+      title: 'Unusually steady',
+      message: `At ${stats.consistency.toFixed(1)}% consistency, your completed days are carrying real discipline—not perfection, but follow-through.`,
     });
   } else if (stats.consistency >= 70) {
     insights.push({
       type: 'encouragement',
-      title: 'Great Progress! 💪',
-      message: `${stats.consistency.toFixed(1)}% consistency is commendable. Aim for 90% to reach excellence!`
+      title: 'Solid ground to build on',
+      message: `${stats.consistency.toFixed(1)}% consistency is meaningful. If you want a next step, aim for moments of the day you can protect no matter what.`,
     });
   } else {
     insights.push({
       type: 'motivation',
-      title: 'Room for Growth 🌱',
-      message: `Your ${stats.consistency.toFixed(1)}% consistency shows commitment. Small improvements daily lead to big changes!`
+      title: 'Gentle room to grow',
+      message: `At ${stats.consistency.toFixed(1)}% consistency, the graph is not a verdict—it is information. Small repairs after a slip often matter more than a streak.`,
     });
   }
 
-  // Masjid prayer insights
   const masjidPercentage = stats.totalPrayers > 0 ? (stats.prayerBreakdown[PRAYER_STATUS.MASJID] / stats.totalPrayers) * 100 : 0;
   if (masjidPercentage >= 50) {
     insights.push({
       type: 'praise',
-      title: 'Masjid Champion! 🕌',
-      message: `${masjidPercentage.toFixed(1)}% of your prayers are in the masjid. The reward is 27 times greater!`
+      title: 'Congregation is showing',
+      message: `${masjidPercentage.toFixed(1)}% of your tracked prayers are in the masjid—often the harder rows, and often the heavier reward.`,
     });
   } else if (masjidPercentage >= 25) {
     insights.push({
       type: 'encouragement',
-      title: 'Building the Habit 🚀',
-      message: `${masjidPercentage.toFixed(1)}% masjid attendance is good. Try to increase it gradually for maximum reward!`
+      title: 'Masjid visits are present',
+      message: `${masjidPercentage.toFixed(1)}% masjid share in this window is a foothold. Where life allows, protect even one prayer in jamā‘ah; it anchors the week.`,
     });
   }
 
-  // Streak insights
   if (stats.bestStreak >= 7) {
     insights.push({
       type: 'achievement',
-      title: `${stats.bestStreak}-Day Streak! 🔥`,
-      message: 'Your dedication is inspiring! Consistency is the key to spiritual growth.'
+      title: `${stats.bestStreak}-day best streak`,
+      message: 'Long streaks are encouraging, but the habit underneath them—showing up after a tired day—is the part that endures.',
     });
   }
 
   if (stats.currentStreak >= 3) {
     insights.push({
       type: 'momentum',
-      title: `Current Streak: ${stats.currentStreak} days! ⚡`,
-      message: 'You\'re on fire! Keep this momentum going.'
+      title: `${stats.currentStreak}-day current streak`,
+      message: 'Momentum helps, but it is fragile on purpose: it keeps you humble and keeps the heart soft.',
     });
   }
 

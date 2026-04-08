@@ -17,6 +17,24 @@ export const useAuth = () => {
   return useContext(AuthContext);
 };
 
+function AuthBootScreen() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-jj-canvas dark:bg-jj-canvas-dark px-6">
+      <div
+        className="h-10 w-10 rounded-full border-2 border-jj-border/80 border-t-jj-accent dark:border-white/12 dark:border-t-teal-300 animate-spin"
+        aria-hidden
+      />
+      <p className="mt-6 text-sm font-medium text-jj-muted dark:text-stone-400 text-center max-w-sm">
+        Starting your session…
+      </p>
+      <p className="mt-3 text-xs text-jj-muted dark:text-stone-500 text-center max-w-md leading-relaxed">
+        If this never finishes, a browser extension (for example a wallet or &quot;lockdown&quot; script) may be
+        blocking auth storage. Try an incognito window with extensions turned off.
+      </p>
+    </div>
+  );
+}
+
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -117,35 +135,60 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      if (user) {
-        // Load nickname when user signs in
-        getUserNickname(user.uid);
-      } else {
-        setUserNickname('');
-      }
+    let unsubscribe = () => {};
+    let bootTimeoutId = window.setTimeout(() => {
+      bootTimeoutId = null;
       setLoading(false);
-    });
+    }, 15000);
 
-    return unsubscribe;
+    const clearBootTimeout = () => {
+      if (bootTimeoutId != null) {
+        window.clearTimeout(bootTimeoutId);
+        bootTimeoutId = null;
+      }
+    };
+
+    auth
+      .authStateReady()
+      .then(() => {
+        unsubscribe = onAuthStateChanged(auth, (user) => {
+          setCurrentUser(user);
+          if (user) {
+            getUserNickname(user.uid);
+          } else {
+            setUserNickname('');
+          }
+          clearBootTimeout();
+          setLoading(false);
+        });
+      })
+      .catch(() => {
+        clearBootTimeout();
+        setLoading(false);
+      });
+
+    return () => {
+      clearBootTimeout();
+      unsubscribe();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const value = {
     currentUser,
     userNickname,
+    loading,
     signup,
     login,
     loginWithGoogle,
     logout,
     getUserNickname,
-    refreshNickname
+    refreshNickname,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? <AuthBootScreen /> : children}
     </AuthContext.Provider>
   );
 };

@@ -28,23 +28,26 @@ const Rules = () => {
   };
 
   const SectionCard = ({ id, title, icon: Icon, children, isExpanded }) => (
-    <div className="bg-white dark:bg-black rounded-xl shadow-lg border border-rose-100 dark:border-gray-800 overflow-hidden">
+    <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.045] dark:ring-white/[0.08] shadow-jj-card dark:shadow-jj-card-dark overflow-hidden">
       <button
+        type="button"
         onClick={() => toggleSection(id)}
-        className="w-full px-6 py-4 bg-gradient-to-r from-rose-50 to-pink-50 hover:from-rose-100 hover:to-pink-100 dark:from-black dark:to-black dark:hover:from-[#0a0a0a] dark:hover:to-[#0a0a0a] transition-colors duration-200 flex items-center justify-between"
+        className="w-full px-4 sm:px-6 py-4 bg-jj-mist/40 dark:bg-white/[0.03] hover:bg-jj-mist/65 dark:hover:bg-white/[0.05] transition-colors duration-jj flex items-center justify-between text-left gap-3"
       >
-        <div className="flex items-center space-x-3">
-          <Icon className="w-6 h-6 text-rose-600" />
-          <h2 className="text-xl font-bold text-rose-800 dark:text-rose-200">{title}</h2>
+        <div className="flex items-center gap-3 min-w-0">
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-jj-accent dark:text-teal-300 shrink-0" strokeWidth={1.75} />
+          <h2 className="text-base sm:text-lg font-semibold tracking-tight text-jj-ink dark:text-stone-100 truncate">
+            {title}
+          </h2>
         </div>
         {isExpanded ? (
-          <ChevronDown className="w-5 h-5 text-rose-600" />
+          <ChevronDown className="w-5 h-5 text-jj-muted dark:text-stone-500 shrink-0" strokeWidth={2} />
         ) : (
-          <ChevronRight className="w-5 h-5 text-rose-600" />
+          <ChevronRight className="w-5 h-5 text-jj-muted dark:text-stone-500 shrink-0" strokeWidth={2} />
         )}
       </button>
       {isExpanded && (
-        <div className="p-6 space-y-6">
+        <div className="px-4 sm:px-6 pb-6 sm:pb-7 pt-1 border-t border-black/[0.04] dark:border-white/[0.06] space-y-6">
           {children}
         </div>
       )}
@@ -52,54 +55,66 @@ const Rules = () => {
   );
 
   const FormulaBox = ({ title, formula, example }) => (
-    <div className="bg-gradient-to-r from-rose-50 to-pink-50 dark:from-black dark:to-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
-      <h4 className="font-semibold text-rose-800 dark:text-rose-200 mb-2">{title}</h4>
-      <div className="bg-white dark:bg-black rounded p-3 mb-3 border border-rose-100 dark:border-gray-800">
-        <code className="text-rose-700 dark:text-rose-300 font-mono text-sm">{formula}</code>
+    <div className="rounded-jj-lg p-4 sm:p-5 bg-jj-mist/35 dark:bg-white/[0.03] ring-1 ring-black/[0.05] dark:ring-white/[0.07]">
+      <h4 className="font-semibold text-jj-ink dark:text-stone-100 mb-2">{title}</h4>
+      <div className="rounded-jj bg-jj-surface dark:bg-jj-elevated-dark px-3 py-3 mb-3 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+        <code className="text-jj-accent dark:text-teal-200 font-mono text-xs sm:text-sm leading-relaxed block">
+          {formula}
+        </code>
       </div>
       {example && (
-        <div className="text-sm text-rose-600 dark:text-rose-300">
-          <strong>Example:</strong> {example}
+        <div className="text-sm text-jj-muted dark:text-stone-400">
+          <span className="font-medium text-jj-ink/80 dark:text-stone-300">Example:</span> {example}
         </div>
       )}
     </div>
   );
 
   const ScoreCard = ({ status, standardScore, masjidScore, icon: Icon, description }) => (
-    <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800 hover:border-rose-300 dark:hover:border-gray-700 transition-colors">
-      <div className="flex items-center space-x-3 mb-2">
-        <Icon className="w-5 h-5 text-rose-600" />
-        <h4 className="font-semibold text-rose-800 dark:text-rose-200">{status}</h4>
+    <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark ring-1 ring-black/[0.02] dark:ring-white/[0.04] transition-[ring-color] hover:ring-black/[0.06] dark:hover:ring-white/[0.08]">
+      <div className="flex items-center gap-3 mb-2">
+        <Icon className="w-5 h-5 text-jj-accent dark:text-teal-300" strokeWidth={1.75} />
+        <h4 className="font-semibold text-jj-ink dark:text-stone-100">{status}</h4>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{description}</p>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-rose-50 dark:bg-[#0a0a0a] rounded p-2">
-          <div className="text-xs text-rose-600 dark:text-rose-300 font-medium">Standard Mode</div>
-          <div className="text-lg font-bold text-rose-800 dark:text-rose-200">{standardScore} pts</div>
+      <p className="text-sm text-jj-muted dark:text-stone-400 mb-3 leading-relaxed">{description}</p>
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="rounded-jj bg-jj-mist/50 dark:bg-white/[0.04] px-2.5 py-2">
+          <div className="text-2xs font-semibold uppercase tracking-cap-wide text-jj-muted dark:text-stone-500">
+            Standard
+          </div>
+          <div className="text-base font-semibold tabular-nums text-jj-ink dark:text-stone-100 mt-0.5">
+            {standardScore} pts
+          </div>
         </div>
-        <div className="bg-pink-50 dark:bg-[#0a0a0a] rounded p-2">
-          <div className="text-xs text-pink-600 dark:text-pink-300 font-medium">Home Mode</div>
-          <div className="text-lg font-bold text-pink-800 dark:text-pink-200">{masjidScore} pts</div>
+        <div className="rounded-jj bg-teal-50/50 dark:bg-teal-950/20 px-2.5 py-2 ring-1 ring-teal-900/8 dark:ring-teal-700/20">
+          <div className="text-2xs font-semibold uppercase tracking-cap-wide text-jj-accent dark:text-teal-400/90">
+            Home mode
+          </div>
+          <div className="text-base font-semibold tabular-nums text-jj-ink dark:text-stone-100 mt-0.5">
+            {masjidScore} pts
+          </div>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-red-50 dark:from-black dark:via-black dark:to-black p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full mb-4">
-            <BookOpen className="w-8 h-8 text-white" />
+    <div className="w-full space-y-6 sm:space-y-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.045] dark:ring-white/[0.08] shadow-jj dark:shadow-jj-dark px-5 sm:px-8 py-7 sm:py-9 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-jj-lg bg-teal-50 dark:bg-teal-950/35 ring-1 ring-teal-900/10 dark:ring-teal-700/25 mb-4">
+            <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 text-jj-accent dark:text-teal-300" strokeWidth={1.75} />
           </div>
-          <h1 className="text-4xl font-bold text-rose-800 dark:text-rose-200 mb-2">Rules & Guide</h1>
-          <p className="text-rose-600 dark:text-rose-300 text-lg">
-            Everything you need to know about Namaaz Tracker
+          <p className="jj-eyebrow">Guide</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-jj-ink dark:text-stone-50 mt-2 text-balance">
+            Rules &amp; reference
+          </h1>
+          <p className="text-sm sm:text-[0.9375rem] text-jj-muted dark:text-stone-400 mt-3 max-w-lg mx-auto leading-relaxed text-pretty">
+            How Jamā&apos;ah Journal scores days, metrics, and settings—plain language, same logic the app uses.
           </p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 sm:space-y-7 mt-6 sm:mt-8">
           {/* Prayer Scoring System */}
           <SectionCard
             id="scoring"
@@ -108,8 +123,8 @@ const Rules = () => {
             isExpanded={expandedSection === 'scoring'}
           >
             <div className="space-y-4">
-              <p className="text-gray-700 dark:text-gray-300">
-                Namaaz Tracker uses a point-based system to track your prayer consistency. 
+              <p className="text-jj-ink/90 dark:text-stone-300">
+                Jamā&apos;ah Journal uses a point-based system to track your prayer consistency. 
                 The scoring varies based on your <strong>Prayer Mode</strong> setting.
               </p>
               
@@ -144,12 +159,12 @@ const Rules = () => {
                 />
               </div>
 
-              <div className="bg-rose-100 dark:bg-[#0a0a0a] rounded-lg p-4 border border-rose-200 dark:border-gray-800">
+              <div className="rounded-jj-lg p-4 sm:p-5 border border-jj-border/80 dark:border-white/[0.08] bg-teal-50/35 dark:bg-white/[0.03]">
                 <div className="flex items-start space-x-3">
-                  <Info className="w-5 h-5 text-rose-600 mt-0.5" />
+                  <Info className="w-5 h-5 text-jj-accent dark:text-teal-300 mt-0.5" />
                   <div>
-                    <h4 className="font-semibold text-rose-800 dark:text-rose-200 mb-1">Why Different Scoring?</h4>
-                    <p className="text-rose-700 dark:text-rose-300 text-sm">
+                    <h4 className="font-semibold text-jj-ink dark:text-stone-100 mb-1">Why Different Scoring?</h4>
+                    <p className="text-jj-muted dark:text-stone-400 text-sm">
                       <strong>Standard Mode:</strong> Rewards mosque attendance with higher points (27 vs 1 for home).<br/>
                       <strong>Home Mode:</strong> Treats all on-time prayers equally (27 pts), perfect for those who primarily pray at home.
                     </p>
@@ -220,27 +235,27 @@ const Rules = () => {
           >
             <div className="space-y-6">
               <div className="space-y-4">
-                <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
+                <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
                   <div className="flex items-center space-x-3 mb-3">
-                    <Building className="w-5 h-5 text-rose-600" />
-                    <h4 className="font-semibold text-rose-800 dark:text-rose-200">Masjid Mode Toggle</h4>
+                    <Building className="w-5 h-5 text-jj-accent dark:text-teal-300" />
+                    <h4 className="font-semibold text-jj-ink dark:text-stone-100">Masjid Mode Toggle</h4>
                   </div>
-                  <p className="text-gray-700 dark:text-gray-300 mb-3">
+                  <p className="text-jj-ink/90 dark:text-stone-300 mb-3">
                     <strong>Location:</strong> Profile → Settings<br/>
                     <strong>Default:</strong> OFF (Standard Mode)
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="bg-rose-50 dark:bg-[#0a0a0a] rounded p-3">
-                      <h5 className="font-medium text-rose-800 dark:text-rose-200 mb-1">Standard Mode (OFF)</h5>
-                      <p className="text-sm text-rose-700 dark:text-rose-300">
+                    <div className="rounded-jj bg-jj-mist/55 dark:bg-white/[0.04] p-3">
+                      <h5 className="font-medium text-jj-ink dark:text-stone-100 mb-1">Standard Mode (OFF)</h5>
+                      <p className="text-sm text-jj-muted dark:text-stone-400">
                         • Shows "Home" and "Masjid" options<br/>
                         • Rewards mosque attendance highly<br/>
                         • Best for regular mosque-goers
                       </p>
                     </div>
-                    <div className="bg-pink-50 dark:bg-[#0a0a0a] rounded p-3">
-                      <h5 className="font-medium text-pink-800 dark:text-pink-200 mb-1">Home Mode (ON)</h5>
-                      <p className="text-sm text-pink-700 dark:text-pink-300">
+                    <div className="rounded-jj bg-teal-50/40 dark:bg-teal-950/15 p-3 ring-1 ring-teal-900/8 dark:ring-teal-600/15">
+                      <h5 className="font-medium text-jj-ink dark:text-stone-100 mb-1">Home Mode (ON)</h5>
+                      <p className="text-sm text-jj-muted dark:text-stone-400">
                         • Shows only "Prayed" option<br/>
                         • Equal points for all on-time prayers<br/>
                         • Best for home prayer preference
@@ -249,27 +264,27 @@ const Rules = () => {
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
+                <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
                   <div className="flex items-center space-x-3 mb-3">
-                    <Eye className="w-5 h-5 text-rose-600" />
-                    <h4 className="font-semibold text-rose-800 dark:text-rose-200">Privacy Toggle</h4>
+                    <Eye className="w-5 h-5 text-jj-accent dark:text-teal-300" />
+                    <h4 className="font-semibold text-jj-ink dark:text-stone-100">Privacy Toggle</h4>
                   </div>
-                  <p className="text-gray-700 dark:text-gray-300 mb-3">
+                  <p className="text-jj-ink/90 dark:text-stone-300 mb-3">
                     <strong>Location:</strong> Profile → Settings<br/>
                     <strong>Default:</strong> ON (Public)
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="bg-rose-50 dark:bg-[#0a0a0a] rounded p-3">
-                      <h5 className="font-medium text-rose-800 dark:text-rose-200 mb-1">Public (ON)</h5>
-                      <p className="text-sm text-rose-700 dark:text-rose-300">
+                    <div className="rounded-jj bg-jj-mist/55 dark:bg-white/[0.04] p-3">
+                      <h5 className="font-medium text-jj-ink dark:text-stone-100 mb-1">Public (ON)</h5>
+                      <p className="text-sm text-jj-muted dark:text-stone-400">
                         • Visible on leaderboards<br/>
                         • Others can add you as friend<br/>
                         • Participate in community features
                       </p>
                     </div>
-                    <div className="bg-pink-50 dark:bg-[#0a0a0a] rounded p-3">
-                      <h5 className="font-medium text-pink-800 dark:text-pink-200 mb-1">Private (OFF)</h5>
-                      <p className="text-sm text-pink-700 dark:text-pink-300">
+                    <div className="rounded-jj bg-teal-50/40 dark:bg-teal-950/15 p-3 ring-1 ring-teal-900/8 dark:ring-teal-600/15">
+                      <h5 className="font-medium text-jj-ink dark:text-stone-100 mb-1">Private (OFF)</h5>
+                      <p className="text-sm text-jj-muted dark:text-stone-400">
                         • Hidden from leaderboards<br/>
                         • Personal tracking only<br/>
                         • Complete privacy
@@ -284,19 +299,19 @@ const Rules = () => {
           {/* How to Use the App */}
           <SectionCard
             id="guide"
-            title="How to Use Namaaz Tracker"
+            title="How to use the app"
             icon={BookOpen}
             isExpanded={expandedSection === 'guide'}
           >
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
+                  <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
                     <div className="flex items-center space-x-3 mb-3">
-                      <Calendar className="w-5 h-5 text-rose-600" />
-                      <h4 className="font-semibold text-rose-800 dark:text-rose-200">1. Track Daily Prayers</h4>
+                      <Calendar className="w-5 h-5 text-jj-accent dark:text-teal-300" />
+                      <h4 className="font-semibold text-jj-ink dark:text-stone-100">1. Track Daily Prayers</h4>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-jj-ink/90 dark:text-stone-300">
                       • Go to Calendar section<br/>
                       • Click on any date<br/>
                       • Mark each prayer status<br/>
@@ -304,12 +319,12 @@ const Rules = () => {
                     </p>
                   </div>
 
-                  <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
+                  <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
                     <div className="flex items-center space-x-3 mb-3">
-                      <TrendingUp className="w-5 h-5 text-rose-600" />
-                      <h4 className="font-semibold text-rose-800 dark:text-rose-200">2. Monitor Progress</h4>
+                      <TrendingUp className="w-5 h-5 text-jj-accent dark:text-teal-300" />
+                      <h4 className="font-semibold text-jj-ink dark:text-stone-100">2. Monitor Progress</h4>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-jj-ink/90 dark:text-stone-300">
                       • Visit Progress section<br/>
                       • View different time periods<br/>
                       • Analyze your statistics<br/>
@@ -319,12 +334,12 @@ const Rules = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
+                  <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
                     <div className="flex items-center space-x-3 mb-3">
-                      <Users className="w-5 h-5 text-rose-600" />
-                      <h4 className="font-semibold text-rose-800 dark:text-rose-200">3. Join Leaderboards</h4>
+                      <Users className="w-5 h-5 text-jj-accent dark:text-teal-300" />
+                      <h4 className="font-semibold text-jj-ink dark:text-stone-100">3. Join Leaderboards</h4>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-jj-ink/90 dark:text-stone-300">
                       • Enable Public profile<br/>
                       • Compete with others<br/>
                       • Add friends<br/>
@@ -332,12 +347,12 @@ const Rules = () => {
                     </p>
                   </div>
 
-                  <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
+                  <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
                     <div className="flex items-center space-x-3 mb-3">
-                      <Settings className="w-5 h-5 text-rose-600" />
-                      <h4 className="font-semibold text-rose-800 dark:text-rose-200">4. Customize Settings</h4>
+                      <Settings className="w-5 h-5 text-jj-accent dark:text-teal-300" />
+                      <h4 className="font-semibold text-jj-ink dark:text-stone-100">4. Customize Settings</h4>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-jj-ink/90 dark:text-stone-300">
                       • Set your prayer mode<br/>
                       • Adjust privacy settings<br/>
                       • Personalize your experience<br/>
@@ -347,12 +362,12 @@ const Rules = () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-rose-100 to-pink-100 dark:from-[#0a0a0a] dark:to-[#0a0a0a] rounded-lg p-6 border border-rose-200 dark:border-gray-800">
-                <div className="flex items-start space-x-3">
-                  <Star className="w-6 h-6 text-rose-600 mt-1" />
+              <div className="rounded-jj-xl p-5 sm:p-6 border border-jj-border/80 dark:border-white/[0.08] bg-jj-mist/30 dark:bg-white/[0.03]">
+                <div className="flex items-start gap-3">
+                  <Star className="w-6 h-6 text-jj-accent dark:text-teal-300 mt-0.5 shrink-0" strokeWidth={1.75} />
                   <div>
-                    <h4 className="font-bold text-rose-800 dark:text-rose-200 mb-2">Pro Tips for Success</h4>
-                    <ul className="text-rose-700 dark:text-rose-300 space-y-1 text-sm">
+                    <h4 className="font-semibold text-jj-ink dark:text-stone-100 mb-2">Practical tips</h4>
+                    <ul className="text-jj-muted dark:text-stone-400 space-y-1.5 text-sm leading-relaxed">
                       <li>• Set your Masjid Mode based on your primary prayer location</li>
                       <li>• Track consistently for accurate statistics</li>
                       <li>• Use the Progress section to identify improvement areas</li>
@@ -373,14 +388,14 @@ const Rules = () => {
             isExpanded={expandedSection === 'leaderboard'}
           >
             <div className="space-y-4">
-              <p className="text-gray-700 dark:text-gray-300">
+              <p className="text-jj-ink/90 dark:text-stone-300">
                 The leaderboard ensures fair competition by separating users based on their prayer modes and calculating composite scores.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
-                  <h4 className="font-semibold text-rose-800 mb-2">Filter Options</h4>
-                  <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
+                  <h4 className="font-semibold text-jj-ink dark:text-stone-100 mb-2">Filter options</h4>
+                  <ul className="text-sm text-jj-ink/90 dark:text-stone-300 space-y-1">
                     <li>• All Users</li>
                     <li>• Standard Mode Only</li>
                     <li>• Home Mode Only</li>
@@ -388,9 +403,9 @@ const Rules = () => {
                   </ul>
                 </div>
 
-                <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
-                  <h4 className="font-semibold text-rose-800 mb-2">Time Periods</h4>
-                  <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
+                  <h4 className="font-semibold text-jj-ink dark:text-stone-100 mb-2">Time periods</h4>
+                  <ul className="text-sm text-jj-ink/90 dark:text-stone-300 space-y-1">
                     <li>• This Week</li>
                     <li>• This Month</li>
                     <li>• This Year</li>
@@ -398,9 +413,9 @@ const Rules = () => {
                   </ul>
                 </div>
 
-                <div className="bg-white dark:bg-black rounded-lg p-4 border border-rose-200 dark:border-gray-800">
-                  <h4 className="font-semibold text-rose-800 mb-2">Ranking Factors</h4>
-                  <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
+                  <h4 className="font-semibold text-jj-ink dark:text-stone-100 mb-2">Ranking factors</h4>
+                  <ul className="text-sm text-jj-ink/90 dark:text-stone-300 space-y-1">
                     <li>• Average Score (45%)</li>
                     <li>• Consistency (20%)</li>
                     <li>• Current Streak (10%)</li>
@@ -414,15 +429,12 @@ const Rules = () => {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-12 pb-8">
-          <div className="inline-flex items-center space-x-2 text-rose-600">
-            <Zap className="w-4 h-4" />
-            <span className="text-sm">
+        <div className="text-center mt-10 sm:mt-12 pb-6">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-jj-muted dark:text-stone-500 max-w-md mx-auto">
+            <Zap className="w-4 h-4 text-jj-accent dark:text-teal-400 shrink-0" strokeWidth={1.75} />
+            <span className="text-sm leading-relaxed text-pretty">
               May Allah accept our prayers and grant us consistency in worship.
-              <br />
-              Enjoying the app? Skip the 5-star rating; a 5-star dua for the developer is priceless!
             </span>
-            <Zap className="w-4 h-4" />
           </div>
         </div>
       </div>

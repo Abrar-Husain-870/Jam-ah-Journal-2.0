@@ -11,6 +11,12 @@ class ServiceWorkerUpdateManager {
 
   // Initialize the update manager
   async init() {
+    if (process.env.NODE_ENV === 'development') {
+      return;
+    }
+    if (this.initialized) {
+      return;
+    }
     if (!('serviceWorker' in navigator)) {
       console.log('Service Worker not supported');
       return;
@@ -21,6 +27,7 @@ class ServiceWorkerUpdateManager {
       this.registration = await navigator.serviceWorker.register('/sw.js');
       console.log('SW registered successfully:', this.registration);
 
+      this.initialized = true;
       // Set up update detection
       this.setupUpdateDetection();
       

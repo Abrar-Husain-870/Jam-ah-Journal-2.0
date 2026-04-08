@@ -240,11 +240,14 @@ const Leaderboard = () => {
     ];
 
     return (
-      <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-100 mt-6 dark:bg-black dark:border-gray-800 glass-card">
-        <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-primary-600" />
-          Friends Metrics Comparison
+      <div className="rounded-3xl border border-jj-border/80 dark:border-white/10 bg-jj-surface dark:bg-jj-surface-dark p-5 sm:p-7 shadow-sm mt-6">
+        <h3 className="text-base font-semibold text-jj-ink dark:text-stone-100 mb-2 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-jj-accent dark:text-teal-300" strokeWidth={1.75} />
+          Friends comparison
         </h3>
+        <p className="text-sm text-jj-muted dark:text-stone-500 mb-6">
+          Bar lengths are scaled to each metric&apos;s typical ceiling in this window—not a judgment, just a side‑by‑side read.
+        </p>
         
         <div className="space-y-6">
           {metrics.map((metric) => (
@@ -303,9 +306,9 @@ const Leaderboard = () => {
           ))}
         </div>
         
-        <div className="mt-4 pt-4 border-t border-purple-100 dark:border-gray-800">
-          <p className="text-xs text-gray-500 text-center">
-            💡 Tip: Higher bars indicate better performance in each metric
+        <div className="mt-4 pt-4 border-t border-jj-border/70 dark:border-white/10">
+          <p className="text-xs text-jj-muted dark:text-stone-500 text-center">
+            Longer bars are stronger on that axis only—they don&apos;t replace the composite score.
           </p>
         </div>
       </div>
@@ -1602,95 +1605,104 @@ const Leaderboard = () => {
   };
 
   if (!currentUser) {
-    return <div>Please log in to view the leaderboard.</div>;
+    return (
+      <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.05] dark:ring-white/[0.08] px-6 py-14 text-center">
+        <p className="text-sm text-jj-muted dark:text-stone-400">Sign in to view the leaderboard.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+    <div className="space-y-5 sm:space-y-7">
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-2 sm:right-4 left-2 sm:left-auto z-50 px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-lg border transition-all duration-300 text-sm sm:text-base ${
-          notification.type === 'success' 
-            ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900 dark:border-green-800 dark:text-green-200' 
-            : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900 dark:border-red-800 dark:text-red-200'
-        }`}>
-          <div className="flex items-center gap-2">
-            {notification.type === 'success' ? (
-              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500 flex items-center justify-center dark:bg-green-700">
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full dark:bg-black"></div>
-              </div>
-            ) : (
-              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-red-500 flex items-center justify-center dark:bg-red-700">
-                <div className="w-2.5 h-0.5 sm:w-3 sm:h-0.5 bg-white rounded dark:bg-black"></div>
-              </div>
-            )}
-            <span className="font-medium flex-1">{notification.message}</span>
-            <button 
+        <div
+          className={`fixed top-4 right-2 sm:right-4 left-2 sm:left-auto z-50 max-w-md sm:max-w-sm px-4 py-3 rounded-jj-xl shadow-jj dark:shadow-jj-dark ring-1 transition-all duration-300 text-sm backdrop-blur-md ${
+            notification.type === 'success'
+              ? 'bg-emerald-50/95 dark:bg-emerald-950/90 text-emerald-900 dark:text-emerald-100 ring-emerald-200/80 dark:ring-emerald-800/50'
+              : 'bg-red-50/95 dark:bg-red-950/88 text-red-900 dark:text-red-100 ring-red-200/80 dark:ring-red-900/45'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <span className="font-medium flex-1 leading-snug">{notification.message}</span>
+            <button
+              type="button"
               onClick={() => setNotification(null)}
-              className="ml-2 text-gray-400 hover:text-gray-600 text-lg sm:text-xl dark:text-gray-300 dark:hover:text-gray-100"
+              className="shrink-0 -mr-1 p-1 rounded-jj text-jj-muted hover:text-jj-ink dark:text-stone-500 dark:hover:text-stone-200"
+              aria-label="Dismiss"
             >
-              ×
+              <X className="w-4 h-4" strokeWidth={2} />
             </button>
           </div>
         </div>
       )}
       
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-4 sm:p-6">
-        <h1 className="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2">
-          <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />
-          Leaderboard
-        </h1>
-        <p className="text-primary-100 text-sm sm:text-base">See how you rank among the community</p>
+      <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.045] dark:ring-white/[0.08] shadow-jj dark:shadow-jj-dark p-5 sm:p-8">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-jj-lg bg-teal-50 dark:bg-teal-950/35 flex items-center justify-center ring-1 ring-teal-900/10 dark:ring-teal-700/25 shrink-0">
+            <Trophy className="w-5 h-5 sm:w-[1.35rem] sm:h-[1.35rem] text-jj-accent dark:text-teal-300" strokeWidth={1.75} />
+          </div>
+          <div className="min-w-0">
+            <p className="jj-eyebrow">Community</p>
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-[-0.02em] text-jj-ink dark:text-stone-50 mt-1.5">
+              Leaderboard
+            </h1>
+            <p className="text-sm text-jj-muted dark:text-stone-400 mt-2 leading-relaxed max-w-prose text-pretty">
+              Same composite rules as Insights—fair buckets, calm presentation.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Controls */}
-      <div className="bg-white rounded-xl p-4 sm:p-6 shadow-lg border border-purple-100 dark:border-gray-800">
+      <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.045] dark:ring-white/[0.08] shadow-jj-card dark:shadow-jj-card-dark p-4 sm:p-6">
         <div className="flex flex-col gap-4 items-start justify-between">
           {!online && (
-            <div className="w-full rounded-lg border text-xs sm:text-sm px-3 py-2 bg-amber-50 border-amber-200 text-amber-800 dark:bg-[#0a0a0a] dark:border-gray-800 dark:text-amber-300">
-              Showing last fetched results. You are offline; results may differ.
+            <div className="w-full rounded-jj-lg text-xs sm:text-sm px-3.5 py-2.5 bg-amber-50/90 dark:bg-amber-950/35 border border-amber-200/70 dark:border-amber-900/40 text-amber-950 dark:text-amber-100/95 ring-1 ring-amber-900/5 dark:ring-amber-500/10">
+              Showing last fetched results. You&apos;re offline—numbers may update when you reconnect.
             </div>
           )}
           {/* Tab Selection */}
-          <div className="flex flex-wrap gap-1 sm:gap-2 w-full">
+          <div className="flex flex-wrap gap-1 p-1 w-full rounded-jj-lg bg-jj-mist/70 dark:bg-white/[0.04] ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
             <button
+              type="button"
               onClick={() => setActiveTab('global')}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base flex-1 sm:flex-none min-w-0 ${
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2.5 rounded-jj font-semibold transition-all duration-jj text-xs sm:text-sm flex-1 sm:flex-none min-w-0 min-h-11 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
                 activeTab === 'global'
-                  ? 'bg-primary-600 text-white dark:bg-primary-800 dark:text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#0a0a0a] dark:text-gray-200 dark:hover:bg-[#111]'
+                  ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-jj-card dark:shadow-none ring-1 ring-black/[0.06] dark:ring-white/[0.08]'
+                  : 'text-jj-muted dark:text-stone-500 hover:text-jj-ink dark:hover:text-stone-200'
               }`}
             >
-              <Globe className="w-4 h-4 flex-shrink-0" />
+              <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 opacity-90" strokeWidth={1.85} />
               <span className="hidden sm:inline">Global</span>
               <span className="sm:hidden truncate">Global</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('friends')}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base flex-1 sm:flex-none min-w-0 ${
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2.5 rounded-jj font-semibold transition-all duration-jj text-xs sm:text-sm flex-1 sm:flex-none min-w-0 min-h-11 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
                 activeTab === 'friends'
-                  ? 'bg-primary-600 text-white dark:bg-primary-800 dark:text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#0a0a0a] dark:text-gray-200 dark:hover:bg-[#111]'
+                  ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-jj-card dark:shadow-none ring-1 ring-black/[0.06] dark:ring-white/[0.08]'
+                  : 'text-jj-muted dark:text-stone-500 hover:text-jj-ink dark:hover:text-stone-200'
               }`}
             >
-              <Users className="w-4 h-4 flex-shrink-0" />
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 opacity-90" strokeWidth={1.85} />
               <span className="hidden sm:inline">Friends ({userFriends.length})</span>
-              <span className="sm:hidden truncate">Friends ({userFriends.length})</span>
+              <span className="sm:hidden truncate">Friends</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('requests')}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg font-medium transition-colors relative text-sm sm:text-base flex-1 sm:flex-none min-w-0 ${
+              className={`relative flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2.5 rounded-jj font-semibold transition-all duration-jj text-xs sm:text-sm flex-1 sm:flex-none min-w-0 min-h-11 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
                 activeTab === 'requests'
-                  ? 'bg-primary-600 text-white dark:bg-primary-800 dark:text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#0a0a0a] dark:text-gray-200 dark:hover:bg-[#111]'
+                  ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-jj-card dark:shadow-none ring-1 ring-black/[0.06] dark:ring-white/[0.08]'
+                  : 'text-jj-muted dark:text-stone-500 hover:text-jj-ink dark:hover:text-stone-200'
               }`}
             >
-              <Star className="w-4 h-4 flex-shrink-0" />
+              <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 opacity-90" strokeWidth={1.85} />
               <span className="hidden sm:inline">Requests</span>
-              <span className="sm:hidden truncate">Requests</span>
+              <span className="sm:hidden truncate">Inbox</span>
               {friendRequestsReceived.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center dark:bg-red-700">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 bg-jj-accent/95 dark:bg-teal-500/90 text-white text-[0.625rem] font-bold rounded-full flex items-center justify-center ring-2 ring-jj-surface dark:ring-jj-surface-dark-2">
                   {friendRequestsReceived.length}
                 </span>
               )}
@@ -1698,10 +1710,10 @@ const Leaderboard = () => {
           </div>
 
           {/* Filters Row */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 items-stretch sm:items-center w-full">
             {/* Time Period Filter */}
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-300" />
+            <div className="flex items-center gap-2 min-w-0">
+              <Calendar className="w-4 h-4 text-jj-muted dark:text-stone-500 shrink-0" strokeWidth={1.75} />
               <select
                 value={timePeriod}
                 onChange={(e) => {
@@ -1710,7 +1722,7 @@ const Leaderboard = () => {
                     localStorage.setItem(`leaderboard_timePeriod_${currentUser.uid}`, e.target.value);
                   }
                 }}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm dark:bg-black dark:text-gray-200 dark:border-gray-700"
+                className="min-h-11 flex-1 sm:flex-none rounded-jj border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark px-3.5 py-2 text-sm text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
               >
                 <option value="all">All Time</option>
                 <option value="week">This Week</option>
@@ -1721,8 +1733,8 @@ const Leaderboard = () => {
             
             {/* Masjid Mode Filter - Only show for Global tab */}
             {activeTab === 'global' && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 font-medium dark:text-gray-300">Prayer Mode:</span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 sm:flex-1">
+                <span className="text-sm font-medium text-jj-muted dark:text-stone-400 shrink-0">Prayer mode</span>
                 <select
                   value={masjidModeFilter}
                   onChange={(e) => {
@@ -1731,7 +1743,7 @@ const Leaderboard = () => {
                       localStorage.setItem(`leaderboard_masjidModeFilter_${currentUser.uid}`, e.target.value);
                     }
                   }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm dark:bg-black dark:text-gray-200 dark:border-gray-700"
+                  className="min-h-11 flex-1 rounded-jj border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark px-3.5 py-2 text-sm text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
                 >
                   <option value="all">All Users</option>
                   <option value="off">Standard Mode</option>
@@ -1744,11 +1756,12 @@ const Leaderboard = () => {
 
         {/* Add Friend Section */}
         {activeTab === 'friends' && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-4 pt-4 border-t border-black/[0.06] dark:border-white/[0.08]">
             {!showAddFriend ? (
               <button
+                type="button"
                 onClick={() => setShowAddFriend(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors dark:bg-green-800 dark:hover:bg-green-900"
+                className="flex items-center gap-2 px-4 py-2.5 min-h-11 rounded-jj bg-jj-accent dark:bg-teal-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity dark:hover:bg-teal-500"
               >
                 <UserPlus className="w-4 h-4" />
                 Add Friend
@@ -1837,12 +1850,12 @@ const Leaderboard = () => {
       )}
 
       {/* Leaderboard */}
-      <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-100 dark:border-gray-800">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">
-            {activeTab === 'global' ? 'Global Rankings' : 'Friends Rankings'} - {formatTimePeriod(timePeriod)}
+      <div className="rounded-3xl border border-jj-border/80 dark:border-white/10 bg-jj-surface dark:bg-jj-surface-dark p-5 sm:p-7 shadow-sm">
+        <div className="flex items-start justify-between gap-3 mb-6">
+          <h2 className="text-lg font-semibold text-jj-ink dark:text-stone-100">
+            {activeTab === 'global' ? 'Global' : 'Friends'} · {formatTimePeriod(timePeriod)}
           </h2>
-          <TrendingUp className="w-5 h-5 text-gray-400" />
+          <TrendingUp className="w-5 h-5 text-jj-muted dark:text-stone-500 shrink-0" strokeWidth={1.75} />
         </div>
 
         {loading ? (

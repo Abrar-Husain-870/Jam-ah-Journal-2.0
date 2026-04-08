@@ -278,15 +278,18 @@ const PrayerCalendar = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white dark:bg-black rounded-lg shadow-lg overflow-hidden glass-card">
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-3 sm:p-4">
-        <h2 className="text-lg sm:text-xl font-semibold text-center">Jamā'ah Journal</h2>
-        <p className="text-center text-primary-100 text-xs sm:text-sm mt-1">
-          Track your spiritual journey
+    <div className="w-full rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 shadow-jj dark:shadow-jj-dark ring-1 ring-black/[0.045] dark:ring-white/[0.07] overflow-hidden">
+      <div className="px-4 sm:px-8 pt-6 sm:pt-9 pb-5 sm:pb-6 border-b border-black/[0.05] dark:border-white/[0.06]">
+        <p className="jj-eyebrow text-center">Daily journal</p>
+        <h2 className="text-[1.3125rem] sm:text-2xl font-semibold tracking-[-0.022em] text-jj-ink dark:text-stone-50 text-center mt-2.5 text-balance leading-[1.2]">
+          Mark today with honesty
+        </h2>
+        <p className="text-center text-sm text-jj-muted dark:text-stone-400 mt-3 max-w-md mx-auto leading-relaxed text-pretty">
+          Tap a day—the ring shows completion at a glance; details stay below.
         </p>
       </div>
 
-      <div className="p-2 sm:p-4 glass-card">
+      <div className="p-3.5 sm:p-7 bg-gradient-to-b from-jj-mist/25 via-jj-surface-2/20 to-jj-surface/30 dark:from-white/[0.02] dark:via-black/[0.12] dark:to-jj-surface-dark/40">
         <Calendar
           onChange={setSelectedDate}
           onClickDay={(date) => {
@@ -317,17 +320,17 @@ const PrayerCalendar = () => {
             return cls.join(' ');
           }}
           navigationLabel={({ date }) => (
-            <span className="font-semibold text-gray-800">
+            <span className="text-[0.9375rem] font-semibold tracking-tight text-jj-ink dark:text-stone-100">
               {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </span>
           )}
-          prevLabel={<ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />}
-          nextLabel={<ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />}
+          prevLabel={<ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-jj-muted dark:text-stone-400" strokeWidth={2} />}
+          nextLabel={<ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-jj-muted dark:text-stone-400" strokeWidth={2} />}
         />
       </div>
 
-      <div className="border-t bg-gray-50 dark:bg-black p-3 sm:p-4 glass-card">
-        <h3 className="font-semibold text-gray-800 mb-3 text-sm sm:text-base">
+      <div className="border-t border-black/[0.05] dark:border-white/[0.06] bg-jj-mist/40 dark:bg-jj-canvas-dark/95 p-4 sm:p-8">
+        <h3 className="font-semibold text-jj-ink dark:text-stone-100 mb-4 sm:mb-5 text-[0.9375rem] sm:text-base tracking-tight">
           {selectedDate.toLocaleDateString('en-US', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -336,35 +339,35 @@ const PrayerCalendar = () => {
           })}
         </h3>
         
-        <div className="space-y-2">
+        <div className="space-y-2.5 sm:space-y-3">
           {Object.values(PRAYER_TYPES).map(prayer => {
             const status = selectedDayData ? selectedDayData[prayer] : undefined;
             
             return (
-              <div key={prayer} className="flex items-center justify-between p-2 bg-white dark:bg-black rounded-lg shadow-sm glass-card">
-                <div className="flex items-center gap-3">
+              <div key={prayer} className="flex items-center justify-between gap-2 sm:gap-3 p-3 sm:p-4 rounded-jj-xl bg-jj-surface dark:bg-jj-elevated-dark ring-1 ring-black/[0.05] dark:ring-white/[0.07] shadow-[0_1px_2px_rgba(28,25,23,0.04)] dark:shadow-none transition-[box-shadow,ring-color] duration-jj hover:ring-black/[0.07] dark:hover:ring-white/[0.1]">
+                <div className="flex items-center gap-3 min-w-0">
                   {status ? (
-                    <div 
-                      className="w-3 h-3 rounded-full"
+                    <div
+                      className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-black/[0.06] dark:ring-white/10"
                       style={{ backgroundColor: PRAYER_COLORS[status] }}
                     />
                   ) : (
-                    <div className="w-3 h-3 rounded-full border-2 border-gray-300" />
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0 border-2 border-stone-300 dark:border-stone-600 bg-transparent" />
                   )}
-                  <span className="font-medium text-gray-700">
+                  <span className="font-semibold text-[0.9375rem] text-jj-ink dark:text-stone-100 truncate">
                     {formatPrayerName(prayer)}
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                  <span className="text-sm text-jj-muted dark:text-stone-400 flex items-center gap-1.5 tabular-nums">
                     {status ? (
                       <>
                         {getPrayerIcon(status)}
                         {getStatusLabel(status)}
-                      </> 
+                      </>
                     ) : (
-                      <span className="text-gray-400">Not marked</span>
+                      <span className="text-stone-400 dark:text-stone-500">Pending</span>
                     )}
                   </span>
                   
@@ -378,10 +381,10 @@ const PrayerCalendar = () => {
                     value={status || ""}
                     onChange={(e) => handlePrayerStatusChange(prayer, e.target.value)}
                     disabled={!online}
-                    className={`text-sm border rounded px-2 py-1 focus:outline-none focus:ring-2 bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 ${
+                    className={`text-sm rounded-jj min-h-11 px-3 py-2 min-w-[8.5rem] sm:min-w-[9.5rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-elevated-dark bg-jj-surface dark:bg-jj-surface-dark-2 text-jj-ink dark:text-stone-100 font-medium ${
                       !online
-                        ? 'border-gray-200 dark:border-gray-800 opacity-60 cursor-not-allowed'
-                        : 'border-gray-300 dark:border-gray-700 focus:ring-primary-500'
+                        ? 'border border-stone-200 dark:border-white/10 opacity-55 cursor-not-allowed'
+                        : 'border border-jj-border dark:border-white/12'
                     }`}
                   >
                     <option value="">-- Select --</option>
@@ -398,7 +401,7 @@ const PrayerCalendar = () => {
           })}
           
           {isFriday(selectedDate) && (
-            <div className="flex items-center justify-between p-2 bg-purple-50 dark:bg-[#0a0a0a] rounded-lg shadow-sm border border-purple-200 dark:border-gray-800 glass-card">
+            <div className="flex items-center justify-between gap-2 sm:gap-3 p-3 sm:p-4 rounded-jj-xl ring-1 ring-violet-200/45 dark:ring-violet-500/20 bg-jj-surface dark:bg-jj-elevated-dark shadow-[0_1px_2px_rgba(28,25,23,0.04)] dark:shadow-none">
               <div className="flex items-center gap-3">
                 {selectedDayData && selectedDayData[SURAH_ALKAHF] ? (
                   <div 
@@ -412,21 +415,23 @@ const PrayerCalendar = () => {
                     <Book className="w-2 h-2 text-gray-300" />
                   </div>
                 )}
-                <div>
-                  <span className="font-medium text-gray-700">Surah Al-Kahf</span>
-                  <div className="text-xs text-purple-600 font-medium">Friday Special (10 points)</div>
+                <div className="min-w-0">
+                  <span className="font-semibold text-jj-ink dark:text-stone-100">Surah Al-Kahf</span>
+                  <div className="text-2xs text-violet-700 dark:text-violet-300/90 font-semibold mt-0.5 uppercase tracking-cap">
+                    Friday · 10 pts
+                  </div>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 flex items-center gap-1">
+                <span className="text-sm text-jj-muted dark:text-stone-400 flex items-center gap-1.5">
                   {selectedDayData && selectedDayData[SURAH_ALKAHF] ? (
                     <>
-                      <Book className="w-4 h-4" />
+                      <Book className="w-4 h-4" strokeWidth={1.85} />
                       {selectedDayData[SURAH_ALKAHF] === SURAH_STATUS.RECITED ? 'Recited' : 'Missed'}
                     </>
                   ) : (
-                    <span className="text-gray-400">Not marked</span>
+                    <span className="text-stone-400 dark:text-stone-500">Pending</span>
                   )}
                 </span>
                 
@@ -440,10 +445,10 @@ const PrayerCalendar = () => {
                   value={(selectedDayData && selectedDayData[SURAH_ALKAHF]) || ""}
                   onChange={(e) => handlePrayerStatusChange(SURAH_ALKAHF, e.target.value)}
                   disabled={!online}
-                  className={`text-sm border rounded px-2 py-1 focus:outline-none bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 ${
+                  className={`text-sm rounded-jj min-h-11 px-3 py-2 min-w-[8.5rem] sm:min-w-[9.5rem] focus:outline-none focus-visible:ring-2 bg-jj-surface dark:bg-jj-surface-dark-2 text-jj-ink dark:text-stone-100 font-medium ${
                     !online
-                      ? 'border-gray-200 dark:border-gray-800 opacity-60 cursor-not-allowed'
-                      : 'border-purple-300 dark:border-gray-700 focus:ring-2 focus:ring-purple-500'
+                      ? 'border border-stone-200 dark:border-white/10 opacity-55 cursor-not-allowed'
+                      : 'border border-violet-300/55 dark:border-violet-500/25 focus-visible:ring-violet-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-elevated-dark'
                   }`}
                 >
                   <option value="">-- Select --</option>
@@ -456,10 +461,10 @@ const PrayerCalendar = () => {
           )}
         </div>
 
-        <div className="mt-4 p-3 bg-primary-50 dark:bg-[#0a0a0a] rounded-lg border border-transparent dark:border-gray-800 glass-card">
-          <div className="flex justify-between items-center">
-            <span className="font-medium text-gray-700 dark:text-gray-200">Daily Score:</span>
-            <span className="font-bold text-primary-700 dark:text-primary-400">
+        <div className="mt-5 sm:mt-6 p-4 sm:p-5 rounded-jj-xl bg-jj-surface dark:bg-jj-elevated-dark ring-1 ring-black/[0.05] dark:ring-white/[0.08]">
+          <div className="flex justify-between items-center gap-3">
+            <span className="text-sm font-semibold text-jj-ink dark:text-stone-200">Daily score</span>
+            <span className="text-base font-semibold tabular-nums tracking-tight text-jj-accent dark:text-teal-300">
               {(() => {
                 const dayScore = calculateDayScore(selectedDayData, selectedDate, masjidMode);
                 const maxScore = isFriday(selectedDate) ? 145 : 135;
@@ -468,9 +473,9 @@ const PrayerCalendar = () => {
             </span>
           </div>
           {isFriday(selectedDate) && (
-            <div className="text-xs text-purple-600 dark:text-purple-400 mt-1 flex items-center gap-1">
-              <Book className="w-3 h-3" />
-              Friday Special: +10 points for Surah Al-Kahf
+            <div className="text-2xs text-violet-700/90 dark:text-violet-300/85 mt-2 font-medium flex items-center gap-1.5 uppercase tracking-cap">
+              <Book className="w-3.5 h-3.5" strokeWidth={1.85} />
+              Includes Surah al-Kahf (+10)
             </div>
           )}
         </div>
