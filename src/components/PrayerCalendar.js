@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Calendar from 'react-calendar';
-import { ChevronLeft, ChevronRight, Church, Home, Clock, X, Book, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Clock, X, Book, Lock } from 'lucide-react';
+import { MosqueIcon } from './icons/MosqueIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc, collection, query as fsQuery, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -259,7 +260,7 @@ const PrayerCalendar = () => {
   const getPrayerIcon = (status) => {
     switch (status) {
       case PRAYER_STATUS.MASJID:
-        return <Church className="w-4 h-4" />;
+        return <MosqueIcon className="w-4 h-4" strokeWidth={1.75} />;
       case PRAYER_STATUS.HOME:
         return <Home className="w-4 h-4" />;
       case PRAYER_STATUS.QAZA:

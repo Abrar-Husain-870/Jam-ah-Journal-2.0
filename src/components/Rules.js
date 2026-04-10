@@ -5,7 +5,6 @@ import {
   Target,
   Settings,
   Home,
-  Building,
   Clock,
   X,
   Award,
@@ -19,6 +18,7 @@ import {
   Star,
   Zap
 } from 'lucide-react';
+import { MosqueIcon } from './icons/MosqueIcon';
 
 const Rules = () => {
   const [expandedSection, setExpandedSection] = useState('scoring');
@@ -165,7 +165,7 @@ const Rules = () => {
                   status="Masjid"
                   standardScore="27"
                   masjidScore="N/A"
-                  icon={Building}
+                  icon={MosqueIcon}
                   description="Prayer performed in congregation at mosque"
                 />
               </div>
@@ -248,7 +248,7 @@ const Rules = () => {
               <div className="space-y-4">
                 <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
                   <div className="flex items-center space-x-3 mb-3">
-                    <Building className="w-5 h-5 text-jj-accent dark:text-teal-300" />
+                    <MosqueIcon className="w-5 h-5 text-jj-accent dark:text-teal-300" strokeWidth={1.75} />
                     <h4 className="font-semibold text-jj-ink dark:text-stone-100">Masjid Mode Toggle</h4>
                   </div>
                   <p className="text-jj-ink/90 dark:text-stone-300 mb-3">

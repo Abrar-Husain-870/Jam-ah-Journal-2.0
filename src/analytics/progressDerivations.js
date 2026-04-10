@@ -97,10 +97,10 @@ export function deriveWeekdayMissInsight(prayerData) {
   });
   if (wdMiss + weMiss < 2) return null;
   if (wdMiss >= 2 && wdMiss > weMiss * 1.2) {
-    return 'Missed marks show up a bit more on weekdays in this span—often logistics, not intent.';
+    return 'More “not prayed” on weekdays than weekends in this window.';
   }
   if (weMiss >= 2 && weMiss > wdMiss * 1.2) {
-    return 'Weekends carry more missed marks here—weekend rhythms may need a gentler anchor.';
+    return 'More “not prayed” on weekends than weekdays in this window.';
   }
   return null;
 }
