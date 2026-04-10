@@ -38,6 +38,7 @@ import {
   getPrayerDataInRange,
   calculatePrayerStats,
 } from '../services/analyticsService';
+import { DEBUG_LOGS_ENABLED } from '../config/debug';
 import { PRAYER_STATUS, PRAYER_COLORS, PRAYER_TYPES, PRAYER_SCORES, SURAH_ALKAHF, SURAH_STATUS, SURAH_SCORES } from '../services/prayerService';
 import { useTheme } from '../contexts/ThemeContext';
 import {
@@ -184,8 +185,10 @@ const Progress = () => {
           endDate = new Date(selectedYear, selectedMonth, 0);
       }
       
-      console.log('Progress Debug - Loaded stats data:', statsData);
-      console.log('Progress Debug - Surah Al-Kahf stats:', statsData.surahAlKahfStats);
+      if (DEBUG_LOGS_ENABLED) {
+        console.log('Progress Debug - Loaded stats data:', statsData);
+        console.log('Progress Debug - Surah Al-Kahf stats:', statsData.surahAlKahfStats);
+      }
       setStats(statsData);
       setInsights(getMotivationalInsights(statsData));
 

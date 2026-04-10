@@ -27,32 +27,43 @@ const Rules = () => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  const SectionCard = ({ id, title, icon: Icon, children, isExpanded }) => (
+  const SectionCard = ({ id, title, icon: Icon, children, isExpanded }) => {
+    const panelId = `rules-section-${id}-panel`;
+    const headingId = `rules-section-${id}-heading`;
+    return (
     <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark-2 ring-1 ring-black/[0.045] dark:ring-white/[0.08] shadow-jj-card dark:shadow-jj-card-dark overflow-hidden">
       <button
         type="button"
         onClick={() => toggleSection(id)}
+        aria-expanded={isExpanded}
+        aria-controls={panelId}
         className="w-full px-4 sm:px-6 py-4 bg-jj-mist/40 dark:bg-white/[0.03] hover:bg-jj-mist/65 dark:hover:bg-white/[0.05] transition-colors duration-jj flex items-center justify-between text-left gap-3"
       >
         <div className="flex items-center gap-3 min-w-0">
           <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-jj-accent dark:text-teal-300 shrink-0" strokeWidth={1.75} />
-          <h2 className="text-base sm:text-lg font-semibold tracking-tight text-jj-ink dark:text-stone-100 truncate">
+          <h2 id={headingId} className="text-base sm:text-lg font-semibold tracking-tight text-jj-ink dark:text-stone-100 truncate">
             {title}
           </h2>
         </div>
         {isExpanded ? (
-          <ChevronDown className="w-5 h-5 text-jj-muted dark:text-stone-500 shrink-0" strokeWidth={2} />
+          <ChevronDown className="w-5 h-5 text-jj-muted dark:text-stone-500 shrink-0" strokeWidth={2} aria-hidden />
         ) : (
-          <ChevronRight className="w-5 h-5 text-jj-muted dark:text-stone-500 shrink-0" strokeWidth={2} />
+          <ChevronRight className="w-5 h-5 text-jj-muted dark:text-stone-500 shrink-0" strokeWidth={2} aria-hidden />
         )}
       </button>
       {isExpanded && (
-        <div className="px-4 sm:px-6 pb-6 sm:pb-7 pt-1 border-t border-black/[0.04] dark:border-white/[0.06] space-y-6">
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={headingId}
+          className="px-4 sm:px-6 pb-6 sm:pb-7 pt-1 border-t border-black/[0.04] dark:border-white/[0.06] space-y-6"
+        >
           {children}
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   const FormulaBox = ({ title, formula, example }) => (
     <div className="rounded-jj-lg p-4 sm:p-5 bg-jj-mist/35 dark:bg-white/[0.03] ring-1 ring-black/[0.05] dark:ring-white/[0.07]">

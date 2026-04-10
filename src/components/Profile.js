@@ -30,6 +30,8 @@ import { deleteUser } from 'firebase/auth';
 import { db } from '../firebase/config';
 import { getYearlyStats, getAllTimeStats } from '../services/analyticsService';
 import { useOnlineStatus } from '../contexts/OnlineStatusContext';
+import { useModalDismiss } from '../hooks/useModalDismiss';
+import { isAdminUser } from '../utils/adminAccess';
 
 const Profile = () => {
   const { currentUser, logout, getUserNickname, refreshNickname, userNickname: contextNickname } = useAuth();
@@ -50,6 +52,16 @@ const Profile = () => {
 const [adminUserList, setAdminUserList] = useState([]);
 const [showAdminDeleteModal, setShowAdminDeleteModal] = useState(false);
 const [userToDelete, setUserToDelete] = useState(null);
+
+  const anyModalOpen = Boolean(
+    userToDelete || showAdminDeleteModal || showClearDataModal || showDeleteConfirm
+  );
+  useModalDismiss(anyModalOpen, () => {
+    if (userToDelete) setUserToDelete(null);
+    else if (showAdminDeleteModal) setShowAdminDeleteModal(false);
+    else if (showClearDataModal) setShowClearDataModal(false);
+    else if (showDeleteConfirm) setShowDeleteConfirm(false);
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -514,8 +526,13 @@ const [userToDelete, setUserToDelete] = useState(null);
       {/* Clear Data Modal */}
       {showClearDataModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="jj-modal-clear-data-title"
+            className="bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark"
+          >
+            <h3 id="jj-modal-clear-data-title" className="text-lg font-semibold text-jj-ink dark:text-stone-100 mb-4">
               Clear {clearDataType === 'all' ? 'All' : clearDataType === 'year' ? 'Year' : 'Month'} Data
             </h3>
             
@@ -594,9 +611,14 @@ const [userToDelete, setUserToDelete] = useState(null);
       {/* Delete Account Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Delete Account</h3>
-            <p className="text-gray-600 mb-6">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="jj-modal-delete-account-title"
+            className="bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark"
+          >
+            <h3 id="jj-modal-delete-account-title" className="text-lg font-semibold text-jj-ink dark:text-stone-100 mb-4">Delete Account</h3>
+            <p className="text-jj-muted dark:text-stone-400 mb-6">
               This will permanently delete your account and all your prayer tracking data. 
               This action cannot be undone.
             </p>
@@ -620,7 +642,7 @@ const [userToDelete, setUserToDelete] = useState(null);
         </div>
       )}
     {/* Admin-only Delete User Button for Abrar Husain */}
-    {currentUser && (currentUser.displayName === 'Abrar Husain' || userNickname === 'Abrar Husain' || currentUser.email === 'abrarhusain@example.com') && (
+    {isAdminUser(currentUser, userNickname) && (
       <div className="mt-8 flex justify-center">
         <button
           onClick={async () => {
@@ -659,9 +681,14 @@ const [userToDelete, setUserToDelete] = useState(null);
     {/* Admin Delete User Modal */}
     {showAdminDeleteModal && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 overflow-y-auto max-h-[90vh]">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Delete Any User (Admin Only)</h3>
-          <p className="text-gray-600 mb-6">Select a user to delete. This action is permanent and cannot be undone.</p>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="jj-modal-admin-delete-title"
+          className="bg-jj-surface dark:bg-jj-elevated-dark rounded-xl p-6 max-w-2xl w-full mx-4 overflow-y-auto max-h-[90vh] border border-jj-border dark:border-white/10"
+        >
+          <h3 id="jj-modal-admin-delete-title" className="text-lg font-semibold text-jj-ink dark:text-stone-100 mb-4">Delete Any User (Admin Only)</h3>
+          <p className="text-jj-muted dark:text-stone-400 mb-6">Select a user to delete. This action is permanent and cannot be undone.</p>
           <div className="overflow-x-auto">
             <table className="min-w-full border">
               <thead>
@@ -704,9 +731,14 @@ const [userToDelete, setUserToDelete] = useState(null);
     {/* Per-user Confirm Delete Modal */}
     {userToDelete && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Confirm Delete</h3>
-          <p className="text-gray-600 mb-6">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="jj-modal-admin-confirm-title"
+          className="bg-jj-surface dark:bg-jj-elevated-dark rounded-xl p-6 max-w-md w-full mx-4 border border-jj-border dark:border-white/10"
+        >
+          <h3 id="jj-modal-admin-confirm-title" className="text-lg font-semibold text-jj-ink dark:text-stone-100 mb-4">Confirm Delete</h3>
+          <p className="text-jj-muted dark:text-stone-400 mb-6">
             Are you sure you want to delete user <span className="font-bold">{userToDelete.nickname || userToDelete.displayName || userToDelete.email}</span>?<br />
             This will permanently delete their account and all data. This action cannot be undone.
           </p>

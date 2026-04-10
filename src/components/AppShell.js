@@ -102,7 +102,8 @@ export function AppShell({
                   key={id}
                   type="button"
                   onClick={() => setCurrentPage(id)}
-                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-jj text-[0.8125rem] font-semibold tracking-tight transition-all duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark ${
+                  aria-current={active ? 'page' : undefined}
+                  className={`jj-interactive-press flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-jj text-[0.8125rem] font-semibold tracking-tight transition-all duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark ${
                     active
                       ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-jj-card dark:shadow-none ring-1 ring-black/[0.06] dark:ring-white/[0.1]'
                       : 'text-jj-muted dark:text-stone-500 hover:text-jj-ink dark:hover:text-stone-200'
@@ -128,7 +129,11 @@ export function AppShell({
         </div>
       )}
 
-      <main className="max-w-2xl lg:max-w-5xl mx-auto px-4 sm:px-8 py-5 sm:py-10 lg:py-12">
+      <main
+        id="jj-main"
+        tabIndex={-1}
+        className="max-w-2xl lg:max-w-5xl mx-auto px-4 sm:px-8 py-5 sm:py-10 lg:py-12 outline-none focus-visible:ring-2 focus-visible:ring-jj-accent/40 focus-visible:ring-offset-4 focus-visible:ring-offset-jj-canvas dark:focus-visible:ring-offset-jj-canvas-dark rounded-sm"
+      >
         {children}
       </main>
 
@@ -150,7 +155,8 @@ export function AppShell({
                 key={id}
                 type="button"
                 onClick={() => setCurrentPage(id)}
-                className={`flex flex-1 flex-col items-center gap-0.5 py-2 px-0.5 rounded-jj-lg min-h-[3.35rem] transition-colors duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jj-accent ${
+                aria-current={active ? 'page' : undefined}
+                className={`jj-interactive-press flex flex-1 flex-col items-center gap-0.5 py-2 px-0.5 rounded-jj-lg min-h-[3.35rem] transition-colors duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jj-accent ${
                   active
                     ? 'text-jj-accent dark:text-teal-300 bg-jj-accent/[0.08] dark:bg-teal-400/[0.09]'
                     : 'text-jj-muted dark:text-stone-500'

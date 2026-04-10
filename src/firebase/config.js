@@ -24,6 +24,12 @@ const firebaseConfig = {
   measurementId: cleanEnv(process.env.REACT_APP_FIREBASE_MEASUREMENT_ID)
 };
 
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.appId) {
+  throw new Error(
+    '[Firebase] Missing required REACT_APP_FIREBASE_API_KEY, REACT_APP_FIREBASE_PROJECT_ID, and/or REACT_APP_FIREBASE_APP_ID. Copy .env.example to .env.local and set your project values.'
+  );
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);

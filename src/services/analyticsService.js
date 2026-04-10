@@ -6,6 +6,7 @@ import {
   orderBy 
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { DEBUG_LOGS_ENABLED } from '../config/debug';
 import { PRAYER_TYPES, PRAYER_STATUS, PRAYER_SCORES, SURAH_ALKAHF, SURAH_STATUS, SURAH_SCORES, isFriday } from './prayerService';
 
 // Lightweight in-memory cache with TTL to avoid refetching on navigation
@@ -38,8 +39,10 @@ export const getPrayerDataInRange = async (userId, startDate, endDate) => {
     const startDateStr = formatLocalDate(startDate);
     const endDateStr = formatLocalDate(endDate);
     
-    console.log('Data Range Debug - Querying range:', { startDateStr, endDateStr });
-    
+    if (DEBUG_LOGS_ENABLED) {
+      console.log('Data Range Debug - Querying range:', { startDateStr, endDateStr });
+    }
+
     const cacheKey = _key('getPrayerDataInRange', { userId, startDateStr, endDateStr });
     const cached = _get(cacheKey);
     if (cached) return cached;
@@ -57,10 +60,14 @@ export const getPrayerDataInRange = async (userId, startDate, endDate) => {
     
     querySnapshot.forEach((doc) => {
       data[doc.id] = doc.data();
-      console.log(`Data Retrieval Debug - Document ${doc.id}:`, doc.data());
+      if (DEBUG_LOGS_ENABLED) {
+        console.log(`Data Retrieval Debug - Document ${doc.id}:`, doc.data());
+      }
     });
-    
-    console.log('Data Retrieval Debug - All retrieved data:', data);
+
+    if (DEBUG_LOGS_ENABLED) {
+      console.log('Data Retrieval Debug - All retrieved data:', data);
+    }
     _set(cacheKey, data);
     return data;
   } catch (error) {
@@ -285,10 +292,11 @@ export const calculatePrayerStats = (prayerData, masjidMode = false) => {
       [PRAYER_STATUS.MASJID]: 27
     } : PRAYER_SCORES;
 
-  // Debug logging for Surah Al-Kahf
-  console.log('Analytics Debug - Total dates in prayerData:', dates.length);
-  console.log('Analytics Debug - Date range:', dates.length > 0 ? `${dates[0]} to ${dates[dates.length - 1]}` : 'No dates');
-  console.log('Analytics Debug - Using Masjid Mode:', masjidMode);
+  if (DEBUG_LOGS_ENABLED) {
+    console.log('Analytics Debug - Total dates in prayerData:', dates.length);
+    console.log('Analytics Debug - Date range:', dates.length > 0 ? `${dates[0]} to ${dates[dates.length - 1]}` : 'No dates');
+    console.log('Analytics Debug - Using Masjid Mode:', masjidMode);
+  }
 
   if (dates.length === 0) return stats;
 
@@ -308,7 +316,9 @@ export const calculatePrayerStats = (prayerData, masjidMode = false) => {
     let markedPrayersCount = 0;
     let allFivePrayersMarked = true;
     
-    console.log(`Analytics Debug - Processing date: ${date}, dateObj: ${dateObj}, isFriday: ${isFriday(dateObj)}`);
+    if (DEBUG_LOGS_ENABLED) {
+      console.log(`Analytics Debug - Processing date: ${date}, dateObj: ${dateObj}, isFriday: ${isFriday(dateObj)}`);
+    }
 
     Object.values(PRAYER_TYPES).forEach(prayer => {
       // Only process prayers that are explicitly marked (not undefined/null/empty)
@@ -471,14 +481,15 @@ export const calculatePrayerStats = (prayerData, masjidMode = false) => {
     stats.surahAlKahfStats.consistency = (stats.surahAlKahfStats.recited / stats.surahAlKahfStats.totalFridays) * 100;
   }
 
-  // Debug final Surah Al-Kahf stats
-  console.log('Analytics Debug - Final Surah Al-Kahf Stats:', {
-    totalFridays: stats.surahAlKahfStats.totalFridays,
-    recited: stats.surahAlKahfStats.recited,
-    missed: stats.surahAlKahfStats.missed,
-    notTracked: stats.surahAlKahfStats.notTracked,
-    consistency: stats.surahAlKahfStats.consistency
-  });
+  if (DEBUG_LOGS_ENABLED) {
+    console.log('Analytics Debug - Final Surah Al-Kahf Stats:', {
+      totalFridays: stats.surahAlKahfStats.totalFridays,
+      recited: stats.surahAlKahfStats.recited,
+      missed: stats.surahAlKahfStats.missed,
+      notTracked: stats.surahAlKahfStats.notTracked,
+      consistency: stats.surahAlKahfStats.consistency
+    });
+  }
 
   return stats;
 };

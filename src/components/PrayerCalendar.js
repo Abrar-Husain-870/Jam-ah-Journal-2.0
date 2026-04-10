@@ -32,6 +32,8 @@ const PrayerCalendar = () => {
   const [selectedDayData, setSelectedDayData] = useState({});
   const [masjidMode, setMasjidMode] = useState(false);
   const saveTimersRef = useRef({});
+  const persistToastTimerRef = useRef(null);
+  const [persistToast, setPersistToast] = useState(null);
   const [outlinedDateStr, setOutlinedDateStr] = useState(null);
 
   const toDateStr = useCallback((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, []);
@@ -159,6 +161,14 @@ const PrayerCalendar = () => {
     };
   }, [currentUser, currentMonth, toDateStr, cacheKeyForRange]);
 
+  useEffect(() => {
+    return () => {
+      if (persistToastTimerRef.current) {
+        clearTimeout(persistToastTimerRef.current);
+      }
+    };
+  }, []);
+
   const handlePrayerStatusChange = (prayer, rawStatus) => {
     if (!currentUser) return;
     if (!online) return;
@@ -210,8 +220,20 @@ const PrayerCalendar = () => {
           const merged = { ...base, [dateStr]: refreshed || {} };
           localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: merged }));
         } catch {}
+        if (persistToastTimerRef.current) clearTimeout(persistToastTimerRef.current);
+        setPersistToast('saved');
+        persistToastTimerRef.current = setTimeout(() => {
+          setPersistToast(null);
+          persistToastTimerRef.current = null;
+        }, 2000);
       } catch (e) {
         console.error('Error updating prayer status:', e);
+        if (persistToastTimerRef.current) clearTimeout(persistToastTimerRef.current);
+        setPersistToast('error');
+        persistToastTimerRef.current = setTimeout(() => {
+          setPersistToast(null);
+          persistToastTimerRef.current = null;
+        }, 5000);
       }
     }, 200);
   };
@@ -338,6 +360,21 @@ const PrayerCalendar = () => {
             day: 'numeric' 
           })}
         </h3>
+        {(persistToast === 'saved' || persistToast === 'error') && (
+          <p
+            role="status"
+            aria-live="polite"
+            className={`text-sm -mt-2 mb-4 sm:mb-5 font-medium transition-opacity duration-200 ${
+              persistToast === 'saved'
+                ? 'text-teal-700 dark:text-teal-300'
+                : 'text-red-800/90 dark:text-red-300/95'
+            }`}
+          >
+            {persistToast === 'saved'
+              ? 'Saved to your journal.'
+              : 'Couldn’t save. Check your connection and try again.'}
+          </p>
+        )}
         
         <div className="space-y-2.5 sm:space-y-3">
           {Object.values(PRAYER_TYPES).map(prayer => {

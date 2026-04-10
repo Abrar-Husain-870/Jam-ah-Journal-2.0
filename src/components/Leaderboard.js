@@ -476,9 +476,10 @@ const Leaderboard = () => {
         allTimeStats.masjidPercentage = allTimeStats.totalPrayers > 0 ? 
           ((allTimeStats.prayerBreakdown['masjid'] || 0) / allTimeStats.totalPrayers) * 100 : 0;
         
-        // Debug logging for masjid percentage
-        console.log('Debug - User:', userId, 'Total prayers:', allTimeStats.totalPrayers, 'Masjid prayers:', allTimeStats.prayerBreakdown['masjid'], 'Percentage:', allTimeStats.masjidPercentage);
-        
+        if (DEBUG_LOGS_ENABLED) {
+          console.log('Debug - User:', userId, 'Total prayers:', allTimeStats.totalPrayers, 'Masjid prayers:', allTimeStats.prayerBreakdown['masjid'], 'Percentage:', allTimeStats.masjidPercentage);
+        }
+
         stats = allTimeStats;
       }
 
@@ -712,10 +713,10 @@ const Leaderboard = () => {
               // Check if friendship is mutual
               if (friendFriends.includes(currentUserNickname)) {
                 validatedFriends.push(friendNickname);
-              } else {
+              } else if (DEBUG_LOGS_ENABLED) {
                 console.log(`Removing non-mutual friend: ${friendNickname}`);
               }
-            } else {
+            } else if (DEBUG_LOGS_ENABLED) {
               console.log(`Removing non-existent friend: ${friendNickname}`);
             }
           } catch (error) {
@@ -849,7 +850,7 @@ const Leaderboard = () => {
             const userDoc = await getDoc(doc(db, 'users', userId));
             if (userDoc.exists()) {
               validatedSentRequests.push(userId);
-            } else {
+            } else if (DEBUG_LOGS_ENABLED) {
               console.log(`Removing orphaned sent request to deleted user: ${userId}`);
             }
           } catch (error) {
@@ -863,7 +864,7 @@ const Leaderboard = () => {
             const userDoc = await getDoc(doc(db, 'users', userId));
             if (userDoc.exists()) {
               validatedReceivedRequests.push(userId);
-            } else {
+            } else if (DEBUG_LOGS_ENABLED) {
               console.log(`Removing orphaned received request from deleted user: ${userId}`);
             }
           } catch (error) {

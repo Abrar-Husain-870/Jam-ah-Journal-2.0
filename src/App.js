@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Login from './components/Login';
@@ -17,6 +17,18 @@ function AppContent() {
   const { currentUser } = useAuth();
   const [currentPage, setCurrentPage] = useState('calendar');
   const { online } = useOnlineStatus();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const main = document.getElementById('jj-main');
+    if (main && typeof main.focus === 'function') {
+      try {
+        main.focus({ preventScroll: true });
+      } catch {
+        main.focus();
+      }
+    }
+  }, [currentPage]);
 
   if (!currentUser) {
     return <Login />;
@@ -47,7 +59,9 @@ function AppContent() {
         setCurrentPage={setCurrentPage}
         online={online}
       >
-        {renderCurrentPage()}
+        <div key={currentPage} className="jj-page-transition">
+          {renderCurrentPage()}
+        </div>
       </AppShell>
       <PWAInstallPrompt />
     </>
