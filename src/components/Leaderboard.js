@@ -1127,13 +1127,17 @@ const Leaderboard = () => {
   const getRankIcon = (rank) => {
     switch (rank) {
       case 1:
-        return <Crown className="w-6 h-6 text-yellow-500" />;
+        return <Crown className="w-6 h-6 text-amber-600/90 dark:text-amber-400/85" strokeWidth={1.75} />;
       case 2:
-        return <Medal className="w-6 h-6 text-gray-400" />;
+        return <Medal className="w-6 h-6 text-stone-400 dark:text-stone-500" strokeWidth={1.75} />;
       case 3:
-        return <Award className="w-6 h-6 text-amber-600" />;
+        return <Award className="w-6 h-6 text-amber-800/75 dark:text-amber-600/80" strokeWidth={1.75} />;
       default:
-        return <span className="w-6 h-6 flex items-center justify-center text-sm font-bold text-gray-600">#{rank}</span>;
+        return (
+          <span className="w-6 h-6 flex items-center justify-center text-sm font-semibold tabular-nums text-jj-muted dark:text-stone-500">
+            #{rank}
+          </span>
+        );
     }
   };
 
@@ -1165,27 +1169,56 @@ const Leaderboard = () => {
   const getTrendIcon = (trend) => {
     switch (trend) {
       case 'improving':
-        return <TrendingUp className="w-4 h-4 text-green-500" title="Improving performance" />;
+        return (
+          <TrendingUp className="w-4 h-4 text-jj-accent/90 dark:text-teal-400/90" strokeWidth={2} title="Improving performance" />
+        );
       case 'declining':
-        return <TrendingDown className="w-4 h-4 text-red-500" title="Declining performance" />;
+        return (
+          <TrendingDown className="w-4 h-4 text-amber-700/85 dark:text-amber-400/85" strokeWidth={2} title="Declining performance" />
+        );
       default:
-        return <Minus className="w-4 h-4 text-gray-400" title="Stable performance" />;
+        return <Minus className="w-4 h-4 text-jj-muted dark:text-stone-500" strokeWidth={2} title="Stable performance" />;
     }
   };
 
+  const getLbCardShellClass = (rank, isCurrentUser = false) => {
+    const base =
+      'rounded-jj-lg bg-jj-surface dark:bg-jj-elevated-dark ring-1 ring-black/[0.06] dark:ring-white/[0.08] shadow-[0_1px_2px_rgba(28,25,23,0.04)] dark:shadow-none transition-colors duration-jj ease-jj-out';
+    const rankAccent =
+      rank === 1
+        ? 'border-l-[3px] border-l-amber-500/55 dark:border-l-amber-400/45'
+        : rank === 2
+          ? 'border-l-[3px] border-l-stone-400/65 dark:border-l-stone-500/50'
+          : rank === 3
+            ? 'border-l-[3px] border-l-amber-800/45 dark:border-l-amber-600/42'
+            : '';
+    const youAccent =
+      rank > 3 && isCurrentUser
+        ? 'border-l-[3px] border-l-jj-accent dark:border-l-teal-400/75'
+        : '';
+    const hover =
+      !isCurrentUser && rank > 3 ? 'hover:bg-jj-mist/40 dark:hover:bg-white/[0.03]' : '';
+    return [base, rank <= 3 ? rankAccent : youAccent, hover].filter(Boolean).join(' ');
+  };
+
+  const lbPillBase =
+    'inline-flex items-center gap-1 px-2 py-1 rounded-jj text-xs font-medium ring-1 ring-inset';
+
   const getStreakBadge = (streak) => {
     if (streak === 0) return null;
-    
-    const getBadgeColor = (days) => {
-      if (days >= 30) return 'bg-purple-100 text-purple-800 border-purple-200';
-      if (days >= 14) return 'bg-orange-100 text-orange-800 border-orange-200';
-      if (days >= 7) return 'bg-blue-100 text-blue-800 border-blue-200';
-      return 'bg-green-100 text-green-800 border-green-200';
-    };
+
+    const tier =
+      streak >= 30
+        ? 'ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300'
+        : streak >= 14
+          ? 'ring-black/[0.07] dark:ring-white/[0.09] bg-jj-mist/90 dark:bg-white/[0.06] text-jj-ink dark:text-stone-200'
+          : streak >= 7
+            ? 'ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-ink dark:text-stone-300'
+            : 'ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/60 dark:bg-white/[0.04] text-jj-muted dark:text-stone-400';
 
     return (
-      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getBadgeColor(streak)}`}>
-        <Flame className="w-3 h-3" />
+      <div className={`${lbPillBase} ${tier}`}>
+        <Flame className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
         {streak}d
       </div>
     );
@@ -1193,17 +1226,19 @@ const Leaderboard = () => {
 
   const getConsistencyBadge = (consistency) => {
     if (consistency === 0) return null;
-    
-    const getBadgeColor = (percent) => {
-      if (percent >= 80) return 'bg-green-100 text-green-800 border-green-200';
-      if (percent >= 60) return 'bg-blue-100 text-blue-800 border-blue-200';
-      if (percent >= 40) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      return 'bg-red-100 text-red-800 border-red-200';
-    };
+
+    const tier =
+      consistency >= 80
+        ? 'ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300'
+        : consistency >= 60
+          ? 'ring-black/[0.07] dark:ring-white/[0.09] bg-jj-mist/90 dark:bg-white/[0.06] text-jj-ink dark:text-stone-200'
+          : consistency >= 40
+            ? 'ring-amber-900/10 dark:ring-amber-500/15 bg-amber-50/85 dark:bg-amber-950/30 text-amber-900/90 dark:text-amber-200/95'
+            : 'ring-red-200/70 dark:ring-red-500/20 bg-red-50/90 dark:bg-red-950/35 text-red-800 dark:text-red-300/95';
 
     return (
-      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getBadgeColor(consistency)}`}>
-        <Target className="w-3 h-3" />
+      <div className={`${lbPillBase} ${tier}`}>
+        <Target className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
         {consistency.toFixed(0)}%
       </div>
     );
@@ -1211,13 +1246,15 @@ const Leaderboard = () => {
 
   const getLastTrackedBadge = (daysSince) => {
     if (daysSince === undefined || daysSince === null) return null;
-    
-    const getBadgeColor = (days) => {
-      if (days === 0) return 'bg-green-100 text-green-800 border-green-200';
-      if (days <= 2) return 'bg-blue-100 text-blue-800 border-blue-200';
-      if (days <= 7) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      return 'bg-red-100 text-red-800 border-red-200';
-    };
+
+    const tier =
+      daysSince === 0
+        ? 'ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300'
+        : daysSince <= 2
+          ? 'ring-black/[0.07] dark:ring-white/[0.09] bg-jj-mist/90 dark:bg-white/[0.06] text-jj-ink dark:text-stone-200'
+          : daysSince <= 7
+            ? 'ring-amber-900/10 dark:ring-amber-500/15 bg-amber-50/85 dark:bg-amber-950/30 text-amber-900/90 dark:text-amber-200/95'
+            : 'ring-red-200/70 dark:ring-red-500/20 bg-red-50/90 dark:bg-red-950/35 text-red-800 dark:text-red-300/95';
 
     const getDisplayText = (days) => {
       if (days === 0) return 'Today';
@@ -1228,8 +1265,8 @@ const Leaderboard = () => {
     };
 
     return (
-      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getBadgeColor(daysSince)}`}>
-        <Clock className="w-3 h-3" />
+      <div className={`${lbPillBase} ${tier}`}>
+        <Clock className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
         {getDisplayText(daysSince)}
       </div>
     );
@@ -1237,16 +1274,17 @@ const Leaderboard = () => {
 
   const getMasjidBadge = (masjidPercentage) => {
     if (masjidPercentage === 0) return null;
-    
-    const getBadgeColor = (percent) => {
-      if (percent >= 50) return 'bg-amber-100 text-amber-800 border-amber-200';
-      if (percent >= 25) return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-      return 'bg-slate-100 text-slate-800 border-slate-200';
-    };
+
+    const tier =
+      masjidPercentage >= 50
+        ? 'ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300'
+        : masjidPercentage >= 25
+          ? 'ring-black/[0.07] dark:ring-white/[0.09] bg-jj-mist/90 dark:bg-white/[0.06] text-jj-ink dark:text-stone-200'
+          : 'ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/60 dark:bg-white/[0.04] text-jj-muted dark:text-stone-400';
 
     return (
-      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getBadgeColor(masjidPercentage)}`}>
-        <Zap className="w-3 h-3" />
+      <div className={`${lbPillBase} ${tier}`}>
+        <Zap className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
         {masjidPercentage.toFixed(0)}%
       </div>
     );
@@ -1394,29 +1432,18 @@ const Leaderboard = () => {
   };
 
   const renderLeaderboardItem = (user, rank, isCurrentUser = false, showAddButton = false, isInactive = false) => {
-    // Special styling for top 3 positions
-    const getTopThreeStyle = () => {
-      if (rank === 1) {
-        return 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300 shadow-lg dark:from-black dark:to-black dark:border-gray-700';
-      } else if (rank === 2) {
-        return 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-300 shadow-md dark:from-black dark:to-black dark:border-gray-700';
-      } else if (rank === 3) {
-        return 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-300 shadow-md dark:from-black dark:to-black dark:border-gray-700';
-      }
-      return '';
-    };
+    const cardStyle = getLbCardShellClass(rank, isCurrentUser);
 
-    const cardStyle = rank <= 3 
-      ? getTopThreeStyle()
-      : isCurrentUser 
-        ? 'bg-primary-50 border-primary-200 shadow-md dark:bg-[#0a0a0a] dark:border-primary-900'
-        : 'bg-white border-gray-200 hover:bg-gray-50 dark:bg-black dark:border-gray-800 dark:hover:bg-[#0a0a0a]';
+    const nameClass = isCurrentUser
+      ? 'text-jj-accent dark:text-teal-300'
+      : 'text-jj-ink dark:text-stone-100';
+
+    const scoreClass = isCurrentUser ? 'text-jj-accent dark:text-teal-300' : 'text-jj-ink dark:text-stone-100';
+
+    const metaClass = 'text-jj-muted dark:text-stone-500';
 
     return (
-      <div 
-        key={user.id} 
-        className={`p-3 sm:p-4 rounded-lg border transition-colors ${cardStyle} glass-card`}
-      >
+      <div key={user.id} className={`p-3 sm:p-4 ${cardStyle}`}>
       {/* Desktop: Two-column layout with score on right */}
       <div className={`hidden sm:flex items-start justify-between ${isInactive ? 'opacity-75' : ''}`}>
         <div className="flex items-center gap-4">
@@ -1424,32 +1451,28 @@ const Leaderboard = () => {
           {getProfileIcon(user.nickname)}
           <div>
             <div className="flex items-center gap-2">
-              <h3 className={`text-base font-semibold ${
-                isCurrentUser ? 'text-primary-800' : 'text-gray-800'
-              }`}>
+              <h3 className={`text-base font-semibold ${nameClass}`}>
                 {user.nickname}
-                {isCurrentUser && <span className="text-primary-600 ml-2 text-sm">(You)</span>}
+                {isCurrentUser && (
+                  <span className="text-jj-muted dark:text-stone-400 font-medium ml-2 text-sm">(You)</span>
+                )}
               </h3>
               {user.trend && getTrendIcon(user.trend)}
             </div>
-            <p className="text-sm text-gray-500">{user.totalDays} days tracked</p>
+            <p className={`text-sm ${metaClass}`}>{user.totalDays} days tracked</p>
           </div>
         </div>
         
         {/* Score - Desktop */}
         <div className="text-right">
-          <p className={`text-2xl font-bold ${
-            isCurrentUser ? 'text-primary-600' : 'text-gray-800'
-          }`}>
+          <p className={`text-2xl font-bold tabular-nums ${scoreClass}`}>
             {user.compositeScore ? user.compositeScore.toFixed(1) : (user.averageScore || 0).toFixed(2)}
           </p>
-          <p className="text-sm text-gray-500">
+          <p className={`text-sm ${metaClass}`}>
             {user.compositeScore ? 'composite score' : 'avg score'}
           </p>
           {user.compositeScore && (
-            <p className="text-xs text-gray-400">
-              avg: {(user.averageScore || 0).toFixed(1)}
-            </p>
+            <p className={`text-xs ${metaClass}`}>avg: {(user.averageScore || 0).toFixed(1)}</p>
           )}
         </div>
       </div>
@@ -1461,32 +1484,28 @@ const Leaderboard = () => {
           {getProfileIcon(user.nickname)}
           <div>
             <div className="flex items-center gap-1">
-              <h3 className={`text-sm font-semibold ${
-                isCurrentUser ? 'text-primary-800' : 'text-gray-800'
-              }`}>
+              <h3 className={`text-sm font-semibold ${nameClass}`}>
                 {user.nickname}
-                {isCurrentUser && <span className="text-primary-600 ml-1 text-xs">(You)</span>}
+                {isCurrentUser && (
+                  <span className="text-jj-muted dark:text-stone-400 font-medium ml-1 text-xs">(You)</span>
+                )}
               </h3>
               {user.trend && getTrendIcon(user.trend)}
             </div>
-            <p className="text-xs text-gray-500">{user.totalDays} days</p>
+            <p className={`text-xs ${metaClass}`}>{user.totalDays} days</p>
           </div>
         </div>
         
         {/* Score - Mobile */}
         <div className="text-right">
-          <p className={`text-lg font-bold ${
-            isCurrentUser ? 'text-primary-600' : 'text-gray-800'
-          }`}>
+          <p className={`text-lg font-bold tabular-nums ${scoreClass}`}>
             {user.compositeScore ? user.compositeScore.toFixed(1) : (user.averageScore || 0).toFixed(2)}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className={`text-xs ${metaClass}`}>
             {user.compositeScore ? 'composite' : 'avg'}
           </p>
           {user.compositeScore && (
-            <p className="text-xs text-gray-400">
-              avg: {(user.averageScore || 0).toFixed(1)}
-            </p>
+            <p className={`text-xs ${metaClass}`}>avg: {(user.averageScore || 0).toFixed(1)}</p>
           )}
         </div>
       </div>
@@ -1496,23 +1515,31 @@ const Leaderboard = () => {
         <div className={`flex items-center gap-2 sm:gap-3 mt-3 ${isInactive ? 'opacity-75' : ''}`}>
           {/* Current Streak */}
           <div className="flex flex-col items-center gap-0.5">
-            <span className="text-xs text-gray-400 font-medium">Current</span>
+            <span className={`text-xs ${metaClass} font-medium`}>Current</span>
             {user.currentStreak > 0 ? (
-              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-                <Flame className="w-3 h-3" />
+              <div
+                className={`${lbPillBase} ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300`}
+              >
+                <Flame className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
                 {user.currentStreak}d
               </div>
             ) : (
-              <span className="text-xs text-gray-400 dark:text-gray-300 px-2 py-1 bg-gray-50 dark:bg-[#0a0a0a] rounded-full border border-gray-200 dark:border-gray-700">0d</span>
+              <span
+                className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
+              >
+                0d
+              </span>
             )}
           </div>
           
           {/* Best Streak (only if different from current) */}
           {user.bestStreak > 0 && user.bestStreak !== user.currentStreak && (
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xs text-gray-400 font-medium">Best</span>
-              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                <Trophy className="w-3 h-3" />
+              <span className={`text-xs ${metaClass} font-medium`}>Best</span>
+              <div
+                className={`${lbPillBase} ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300`}
+              >
+                <Trophy className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
                 {user.bestStreak}d
               </div>
             </div>
@@ -1520,23 +1547,29 @@ const Leaderboard = () => {
           
           {/* Consistency Badge */}
           <div className="flex flex-col items-center gap-0.5">
-            <span className="text-xs text-gray-400 font-medium">Consistency</span>
+            <span className={`text-xs ${metaClass} font-medium`}>Consistency</span>
             {getConsistencyBadge(user.consistency)}
           </div>
           
           {/* Masjid Percentage - only show for users not in masjid mode */}
           {!user.masjidMode && (
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xs text-gray-400 font-medium">Masjid</span>
-              {user.masjidPercentage > 0 ? getMasjidBadge(user.masjidPercentage) : (
-                <span className="text-xs text-gray-400 px-2 py-1 bg-gray-50 rounded-full border">0%</span>
+              <span className={`text-xs ${metaClass} font-medium`}>Masjid</span>
+              {user.masjidPercentage > 0 ? (
+                getMasjidBadge(user.masjidPercentage)
+              ) : (
+                <span
+                  className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
+                >
+                  0%
+                </span>
               )}
             </div>
           )}
           
           {/* Last Tracked */}
           <div className="flex flex-col items-center gap-0.5">
-            <span className="text-xs text-gray-400 font-medium">Last</span>
+            <span className={`text-xs ${metaClass} font-medium`}>Last</span>
             {getLastTrackedBadge(user.daysSinceLastActivity)}
           </div>
         </div>
@@ -1844,8 +1877,8 @@ const Leaderboard = () => {
 
       {/* Current User Stats (if not in top list) */}
       {currentUserStats && currentUserRank && currentUserRank > 100 && (
-        <div className="bg-white rounded-xl p-6 shadow-lg border border-purple-100 dark:border-gray-800">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Ranking</h3>
+        <div className="rounded-jj-xl bg-jj-surface dark:bg-jj-elevated-dark ring-1 ring-black/[0.06] dark:ring-white/[0.08] shadow-jj-card dark:shadow-jj-card-dark p-6">
+          <h3 className="text-lg font-semibold text-jj-ink dark:text-stone-100 mb-4">Your ranking</h3>
           {renderLeaderboardItem(currentUserStats, currentUserRank, true)}
         </div>
       )}
@@ -1898,11 +1931,11 @@ const Leaderboard = () => {
                       {/* Active Users Section */}
                       {activeUsers.length > 0 && (
                         <div>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-3 sm:mb-4 pb-2 border-b border-gray-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-3 sm:mb-4 pb-2 border-b border-jj-border/70 dark:border-white/[0.08]">
                             <div className="flex items-center gap-2">
-                              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                              <h3 className="text-base sm:text-lg font-semibold text-gray-800">Active Users</h3>
-                              <span className="text-sm text-gray-500">({activeUsers.length})</span>
+                              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-jj-accent dark:text-teal-400/90" strokeWidth={2} />
+                              <h3 className="text-base sm:text-lg font-semibold text-jj-ink dark:text-stone-100">Active Users</h3>
+                              <span className="text-sm text-jj-muted dark:text-stone-500">({activeUsers.length})</span>
                             </div>
                           </div>
                           <div className="space-y-2 sm:space-y-3">
@@ -1918,13 +1951,13 @@ const Leaderboard = () => {
                       {/* Inactive Users Section */}
                       {inactiveUsers.length > 0 && (
                         <div>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-3 sm:mb-4 pb-2 border-b border-gray-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-3 sm:mb-4 pb-2 border-b border-jj-border/70 dark:border-white/[0.08]">
                             <div className="flex items-center gap-2">
-                              <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
-                              <h3 className="text-base sm:text-lg font-semibold text-gray-600">Inactive Users</h3>
-                              <span className="text-sm text-gray-500">({inactiveUsers.length})</span>
+                              <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-amber-700/80 dark:text-amber-400/85" strokeWidth={2} />
+                              <h3 className="text-base sm:text-lg font-semibold text-jj-ink dark:text-stone-200">Inactive Users</h3>
+                              <span className="text-sm text-jj-muted dark:text-stone-500">({inactiveUsers.length})</span>
                             </div>
-                            <span className="text-xs text-gray-400 sm:ml-2">
+                            <span className="text-xs text-jj-muted dark:text-stone-500 sm:ml-2">
                               Less than {minDays} days tracked or inactive {inactiveDays}+ days
                             </span>
                           </div>
@@ -1952,7 +1985,10 @@ const Leaderboard = () => {
                   {/* Friends List */}
                   <div className="space-y-3">
                     {friendsData.map((friend, index) => (
-                      <div key={friend.id} className="p-3 sm:p-4 rounded-lg border bg-white border-gray-200 hover:bg-gray-50">
+                      <div
+                        key={friend.id}
+                        className={`p-3 sm:p-4 ${getLbCardShellClass(index + 1, false)}`}
+                      >
                         {/* Mobile: Stack vertically, Desktop: Side by side */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
@@ -1960,24 +1996,24 @@ const Leaderboard = () => {
                             <div className="flex-shrink-0">{getProfileIcon(friend.nickname)}</div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-gray-800 truncate">{friend.nickname}</h3>
+                                <h3 className="font-semibold text-jj-ink dark:text-stone-100 truncate">{friend.nickname}</h3>
                                 {friend.trend && getTrendIcon(friend.trend)}
                               </div>
-                              <p className="text-sm text-gray-500">{friend.totalDays} days tracked</p>
+                              <p className="text-sm text-jj-muted dark:text-stone-500">{friend.totalDays} days tracked</p>
                             </div>
                           </div>
                           
                           {/* Mobile: Full width layout, Desktop: Compact layout */}
                           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3">
                             <div className="text-center sm:text-right">
-                              <p className="text-xl sm:text-2xl font-bold text-gray-800">
+                              <p className="text-xl sm:text-2xl font-bold tabular-nums text-jj-ink dark:text-stone-100">
                                 {friend.compositeScore ? friend.compositeScore.toFixed(1) : (friend.averageScore || 0).toFixed(2)}
                               </p>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-jj-muted dark:text-stone-500">
                                 {friend.compositeScore ? 'composite score' : 'avg score'}
                               </p>
                               {friend.compositeScore && (
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-jj-muted dark:text-stone-500">
                                   avg: {(friend.averageScore || 0).toFixed(1)}
                                 </p>
                               )}
@@ -1997,37 +2033,49 @@ const Leaderboard = () => {
                         
                         {/* Competitive Metrics Row - Always show for users with data */}
                         {friend.totalDays > 0 && (
-                          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-purple-100 dark:border-gray-800">
+                          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-jj-border/60 dark:border-white/[0.08]">
                             <div className="flex items-center gap-2 flex-wrap">
                               {/* Always show streak (0 if no streak) */}
                               <div className="flex items-center gap-1">
-                                <span className="text-xs text-gray-500">Streak:</span>
+                                <span className="text-xs text-jj-muted dark:text-stone-500">Streak:</span>
                                 {friend.currentStreak > 0 ? getStreakBadge(friend.currentStreak) : (
-                                  <span className="text-xs text-gray-400">0d</span>
+                                  <span
+                                    className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
+                                  >
+                                    0d
+                                  </span>
                                 )}
                               </div>
                               
                               {/* Always show consistency */}
                               <div className="flex items-center gap-1">
-                                <span className="text-xs text-gray-500">Consistency:</span>
+                                <span className="text-xs text-jj-muted dark:text-stone-500">Consistency:</span>
                                 {friend.consistency > 0 ? getConsistencyBadge(friend.consistency) : (
-                                  <span className="text-xs text-gray-400">0%</span>
+                                  <span
+                                    className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
+                                  >
+                                    0%
+                                  </span>
                                 )}
                               </div>
                               
                               {/* Show masjid percentage only for users not in masjid mode */}
                               {!friend.masjidMode && (
                                 <div className="flex items-center gap-1">
-                                  <span className="text-xs text-gray-500">Masjid:</span>
+                                  <span className="text-xs text-jj-muted dark:text-stone-500">Masjid:</span>
                                   {friend.masjidPercentage > 0 ? getMasjidBadge(friend.masjidPercentage) : (
-                                    <span className="text-xs text-gray-400">0%</span>
+                                    <span
+                                      className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
+                                    >
+                                      0%
+                                    </span>
                                   )}
                                 </div>
                               )}
                               
                               {/* Last Tracked */}
                               <div className="flex items-center gap-1">
-                                <span className="text-xs text-gray-500">Last:</span>
+                                <span className="text-xs text-jj-muted dark:text-stone-500">Last:</span>
                                 {getLastTrackedBadge(friend.daysSinceLastActivity)}
                               </div>
                               
