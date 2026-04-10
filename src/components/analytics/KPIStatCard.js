@@ -10,7 +10,7 @@ export function KPIStatCard({
 }) {
   return (
     <article
-      className={`group rounded-jj-xl px-4 py-4 sm:px-5 sm:py-5 transition-[box-shadow,transform] duration-jj ${
+      className={`group jj-card-hover-lift rounded-jj-xl px-4 py-4 sm:px-5 sm:py-5 ${
         emphasize
           ? 'bg-gradient-to-b from-teal-50/95 via-white to-white dark:from-teal-950/40 dark:via-jj-surface-dark-2 dark:to-jj-surface-dark-2 shadow-[0_1px_0_rgba(13,109,99,0.1),0_20px_48px_-20px_rgba(13,109,99,0.22)] dark:shadow-[0_1px_0_rgba(94,234,212,0.12),0_24px_56px_-24px_rgba(0,0,0,0.55)] ring-1 ring-teal-900/12 dark:ring-teal-400/15'
           : 'bg-jj-surface dark:bg-jj-surface-dark-2 shadow-[0_1px_2px_rgba(28,25,23,0.04)] dark:shadow-jj-card-dark ring-1 ring-black/[0.05] dark:ring-white/[0.07]'

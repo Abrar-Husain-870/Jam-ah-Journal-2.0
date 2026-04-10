@@ -71,7 +71,7 @@ export function AppShell({
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="p-2.5 min-w-[2.75rem] min-h-[2.75rem] rounded-jj text-jj-muted hover:text-jj-ink dark:text-stone-400 dark:hover:text-stone-100 hover:bg-black/[0.045] dark:hover:bg-white/[0.06] transition-colors duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-canvas dark:focus-visible:ring-offset-jj-canvas-dark"
+                className="jj-interactive-press p-2.5 min-w-[2.75rem] min-h-[2.75rem] rounded-jj text-jj-muted hover:text-jj-ink dark:text-stone-400 dark:hover:text-stone-100 hover:bg-black/[0.045] dark:hover:bg-white/[0.06] transition-colors duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-canvas dark:focus-visible:ring-offset-jj-canvas-dark"
                 aria-label={resolvedTheme === 'dark' ? 'Use light theme' : 'Use dark theme'}
               >
                 {resolvedTheme === 'dark' ? (
@@ -83,7 +83,7 @@ export function AppShell({
               <button
                 type="button"
                 onClick={handleLogout}
-                className="p-2.5 min-w-[2.75rem] min-h-[2.75rem] rounded-jj text-jj-muted hover:text-jj-ink dark:text-stone-400 dark:hover:text-stone-100 hover:bg-black/[0.045] dark:hover:bg-white/[0.06] transition-colors duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-canvas dark:focus-visible:ring-offset-jj-canvas-dark"
+                className="jj-interactive-press p-2.5 min-w-[2.75rem] min-h-[2.75rem] rounded-jj text-jj-muted hover:text-jj-ink dark:text-stone-400 dark:hover:text-stone-100 hover:bg-black/[0.045] dark:hover:bg-white/[0.06] transition-colors duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-canvas dark:focus-visible:ring-offset-jj-canvas-dark"
                 aria-label="Sign out"
               >
                 <LogOut className="w-[1.15rem] h-[1.15rem]" strokeWidth={1.85} />
@@ -103,7 +103,7 @@ export function AppShell({
                   type="button"
                   onClick={() => setCurrentPage(id)}
                   aria-current={active ? 'page' : undefined}
-                  className={`jj-interactive-press flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-jj text-[0.8125rem] font-semibold tracking-tight transition-all duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark ${
+                  className={`jj-interactive-press flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-jj text-[0.8125rem] font-semibold tracking-tight transition-all duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark ${
                     active
                       ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-jj-card dark:shadow-none ring-1 ring-black/[0.06] dark:ring-white/[0.1]'
                       : 'text-jj-muted dark:text-stone-500 hover:text-jj-ink dark:hover:text-stone-200'
@@ -156,7 +156,7 @@ export function AppShell({
                 type="button"
                 onClick={() => setCurrentPage(id)}
                 aria-current={active ? 'page' : undefined}
-                className={`jj-interactive-press flex flex-1 flex-col items-center gap-0.5 py-2 px-0.5 rounded-jj-lg min-h-[3.35rem] transition-colors duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jj-accent ${
+                className={`jj-interactive-press flex flex-1 flex-col items-center gap-0.5 py-2 px-0.5 rounded-jj-lg min-h-[3.35rem] transition-colors duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jj-accent ${
                   active
                     ? 'text-jj-accent dark:text-teal-300 bg-jj-accent/[0.08] dark:bg-teal-400/[0.09]'
                     : 'text-jj-muted dark:text-stone-500'

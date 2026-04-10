@@ -28,7 +28,7 @@ const PrayerStatusTile = ({ date, dayData }) => {
   return (
     <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
       <div
-        className="w-[2.35rem] h-[2.35rem] sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-transform duration-jj ease-out transform group-hover:scale-[1.02] ring-1 ring-black/[0.06] dark:ring-white/[0.11] shadow-[0_2px_10px_-3px_rgba(41,37,36,0.14)] dark:shadow-[0_2px_14px_-2px_rgba(0,0,0,0.5)]"
+        className="jj-hover-tile-scale w-[2.35rem] h-[2.35rem] sm:w-10 sm:h-10 rounded-full flex items-center justify-center transform ring-1 ring-black/[0.06] dark:ring-white/[0.11] shadow-[0_2px_10px_-3px_rgba(41,37,36,0.14)] dark:shadow-[0_2px_14px_-2px_rgba(0,0,0,0.5)]"
         style={backgroundStyle}
       >
         <div className="w-[1.45rem] h-[1.45rem] sm:w-7 sm:h-7 bg-white dark:bg-jj-surface-dark-2 rounded-full flex items-center justify-center ring-1 ring-black/[0.05] dark:ring-white/[0.09]">

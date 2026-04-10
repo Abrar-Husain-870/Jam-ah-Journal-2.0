@@ -38,7 +38,7 @@ const UpdateNotification = () => {
 
   return (
     <div className="fixed top-4 left-4 right-4 z-50 max-w-md mx-auto">
-      <div className="bg-white border border-primary-200 rounded-lg shadow-lg p-4">
+      <div className="jj-toast-surface bg-white border border-primary-200 rounded-lg shadow-lg p-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
             <Download className="w-5 h-5 text-primary-600" />

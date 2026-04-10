@@ -8,6 +8,16 @@
 
 @layer base {
 
+  :root {
+
+    --jj-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --jj-duration: 180ms;
+
+    --jj-page-duration: 240ms;
+
+  }
+
   html {
 
     -webkit-tap-highlight-color: transparent;
@@ -472,11 +482,123 @@
 }
 
 .jj-page-transition {
-  animation: jj-page-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: jj-page-enter var(--jj-page-duration, 240ms) var(--jj-ease-out) both;
 }
 
 .jj-interactive-press {
-  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 150ms var(--jj-ease-out);
+}
+
+@media (hover: hover) {
+
+  .jj-hover-tile-scale {
+
+    transition: transform var(--jj-duration) var(--jj-ease-out);
+
+  }
+
+  /* Tile inner uses pointer-events-none; scale follows parent .prayer-tile hover */
+
+  .prayer-tile:hover .jj-hover-tile-scale {
+
+    transform: scale(1.02);
+
+  }
+
+}
+
+.jj-modal-panel-motion {
+
+  animation: jj-modal-panel-in 220ms var(--jj-ease-out) both;
+
+}
+
+@keyframes jj-modal-panel-in {
+
+  from {
+
+    opacity: 0;
+
+    transform: translateY(6px) scale(0.99);
+
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform: translateY(0) scale(1);
+
+  }
+
+}
+
+@media (hover: hover) {
+
+  .jj-card-hover-lift {
+
+    transition: box-shadow var(--jj-duration) var(--jj-ease-out), transform var(--jj-duration) var(--jj-ease-out);
+
+  }
+
+  .jj-card-hover-lift:hover {
+
+    transform: translateY(-2px);
+
+  }
+
+}
+
+.jj-toast-surface {
+
+  animation: jj-toast-in 200ms var(--jj-ease-out) both;
+
+}
+
+@keyframes jj-toast-in {
+
+  from {
+
+    opacity: 0;
+
+    transform: translateY(-6px);
+
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform: translateY(0);
+
+  }
+
+}
+
+.jj-toast-surface-bottom {
+
+  animation: jj-toast-in-bottom 200ms var(--jj-ease-out) both;
+
+}
+
+@keyframes jj-toast-in-bottom {
+
+  from {
+
+    opacity: 0;
+
+    transform: translateY(8px);
+
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform: translateY(0);
+
+  }
+
 }
 
 .jj-interactive-press:active {
@@ -484,13 +606,34 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .jj-page-transition {
+
+  .jj-page-transition,
+  .jj-modal-panel-motion,
+  .jj-toast-surface,
+  .jj-toast-surface-bottom {
     animation: none !important;
   }
 
   .jj-interactive-press:active {
     transform: none !important;
   }
+
+  .jj-card-hover-lift:hover {
+    transform: none !important;
+  }
+
+  .prayer-tile:hover .jj-hover-tile-scale {
+    transform: none !important;
+  }
+
+  .jj-surface-page,
+  .jj-interactive-well,
+  nav[aria-label] button,
+  main button:not(.animate-spin),
+  main [role='button'] {
+    transition-duration: 0.01ms !important;
+  }
+
 }
 
 

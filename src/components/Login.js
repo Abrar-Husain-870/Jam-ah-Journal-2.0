@@ -81,7 +81,7 @@ const Login = () => {
                 setIsLogin(true);
                 setError('');
               }}
-              className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent ${
+              className={`jj-interactive-press flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent ${
                 isLogin
                   ? 'bg-white dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-sm'
                   : 'text-jj-muted dark:text-stone-400'
@@ -95,7 +95,7 @@ const Login = () => {
                 setIsLogin(false);
                 setError('');
               }}
-              className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent ${
+              className={`jj-interactive-press flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent ${
                 !isLogin
                   ? 'bg-white dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-sm'
                   : 'text-jj-muted dark:text-stone-400'
@@ -178,7 +178,7 @@ const Login = () => {
               type="submit"
               disabled={loading}
               aria-busy={loading}
-              className="min-h-[3.25rem] w-full py-3.5 rounded-2xl bg-jj-accent dark:bg-teal-600 text-white font-medium hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 dark:focus-visible:ring-offset-jj-surface-dark disabled:opacity-50 disabled:cursor-not-allowed transition-opacity inline-flex items-center justify-center gap-2"
+              className="jj-interactive-press min-h-[3.25rem] w-full py-3.5 rounded-2xl bg-jj-accent dark:bg-teal-600 text-white font-medium hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 dark:focus-visible:ring-offset-jj-surface-dark disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-jj ease-jj-out inline-flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -210,7 +210,7 @@ const Login = () => {
               onClick={handleGoogleLogin}
               disabled={loading}
               aria-busy={loading}
-              className="jj-interactive-press mt-5 min-h-[3.25rem] w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border border-jj-border dark:border-white/10 bg-white dark:bg-black text-jj-ink dark:text-stone-100 hover:bg-stone-50 dark:hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="jj-interactive-press mt-5 min-h-[3.25rem] w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border border-jj-border dark:border-white/10 bg-white dark:bg-black text-jj-ink dark:text-stone-100 hover:bg-stone-50 dark:hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-jj ease-jj-out"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 shrink-0 animate-spin text-jj-muted dark:text-stone-400" aria-hidden />

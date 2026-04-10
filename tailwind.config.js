@@ -174,6 +174,14 @@ module.exports = {
 
         jj: '180ms',
 
+        'jj-page': '240ms',
+
+      },
+
+      transitionTimingFunction: {
+
+        'jj-out': 'cubic-bezier(0.22, 1, 0.36, 1)',
+
       },
 
     },

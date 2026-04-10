@@ -530,7 +530,7 @@ const [userToDelete, setUserToDelete] = useState(null);
             role="dialog"
             aria-modal="true"
             aria-labelledby="jj-modal-clear-data-title"
-            className="bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark"
+            className="jj-modal-panel-motion bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark"
           >
             <h3 id="jj-modal-clear-data-title" className="text-lg font-semibold text-jj-ink dark:text-stone-100 mb-4">
               Clear {clearDataType === 'all' ? 'All' : clearDataType === 'year' ? 'Year' : 'Month'} Data
@@ -615,7 +615,7 @@ const [userToDelete, setUserToDelete] = useState(null);
             role="dialog"
             aria-modal="true"
             aria-labelledby="jj-modal-delete-account-title"
-            className="bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark"
+            className="jj-modal-panel-motion bg-jj-surface dark:bg-jj-surface-dark rounded-3xl border border-jj-border dark:border-white/10 p-6 max-w-md w-full shadow-jj dark:shadow-jj-dark"
           >
             <h3 id="jj-modal-delete-account-title" className="text-lg font-semibold text-jj-ink dark:text-stone-100 mb-4">Delete Account</h3>
             <p className="text-jj-muted dark:text-stone-400 mb-6">
@@ -685,7 +685,7 @@ const [userToDelete, setUserToDelete] = useState(null);
           role="dialog"
           aria-modal="true"
           aria-labelledby="jj-modal-admin-delete-title"
-          className="bg-jj-surface dark:bg-jj-elevated-dark rounded-xl p-6 max-w-2xl w-full mx-4 overflow-y-auto max-h-[90vh] border border-jj-border dark:border-white/10"
+          className="jj-modal-panel-motion bg-jj-surface dark:bg-jj-elevated-dark rounded-xl p-6 max-w-2xl w-full mx-4 overflow-y-auto max-h-[90vh] border border-jj-border dark:border-white/10"
         >
           <h3 id="jj-modal-admin-delete-title" className="text-lg font-semibold text-jj-ink dark:text-stone-100 mb-4">Delete Any User (Admin Only)</h3>
           <p className="text-jj-muted dark:text-stone-400 mb-6">Select a user to delete. This action is permanent and cannot be undone.</p>
@@ -735,7 +735,7 @@ const [userToDelete, setUserToDelete] = useState(null);
           role="dialog"
           aria-modal="true"
           aria-labelledby="jj-modal-admin-confirm-title"
-          className="bg-jj-surface dark:bg-jj-elevated-dark rounded-xl p-6 max-w-md w-full mx-4 border border-jj-border dark:border-white/10"
+          className="jj-modal-panel-motion bg-jj-surface dark:bg-jj-elevated-dark rounded-xl p-6 max-w-md w-full mx-4 border border-jj-border dark:border-white/10"
         >
           <h3 id="jj-modal-admin-confirm-title" className="text-lg font-semibold text-jj-ink dark:text-stone-100 mb-4">Confirm Delete</h3>
           <p className="text-jj-muted dark:text-stone-400 mb-6">

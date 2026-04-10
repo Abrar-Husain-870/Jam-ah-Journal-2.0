@@ -1618,7 +1618,7 @@ const Leaderboard = () => {
       {/* Notification */}
       {notification && (
         <div
-          className={`fixed top-4 right-2 sm:right-4 left-2 sm:left-auto z-50 max-w-md sm:max-w-sm px-4 py-3 rounded-jj-xl shadow-jj dark:shadow-jj-dark ring-1 transition-all duration-300 text-sm backdrop-blur-md ${
+          className={`fixed top-4 right-2 sm:right-4 left-2 sm:left-auto z-50 max-w-md sm:max-w-sm px-4 py-3 rounded-jj-xl shadow-jj dark:shadow-jj-dark ring-1 transition-[opacity,transform] duration-jj ease-jj-out text-sm backdrop-blur-md jj-toast-surface ${
             notification.type === 'success'
               ? 'bg-emerald-50/95 dark:bg-emerald-950/90 text-emerald-900 dark:text-emerald-100 ring-emerald-200/80 dark:ring-emerald-800/50'
               : 'bg-red-50/95 dark:bg-red-950/88 text-red-900 dark:text-red-100 ring-red-200/80 dark:ring-red-900/45'

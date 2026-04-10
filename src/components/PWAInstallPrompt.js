@@ -109,7 +109,7 @@ const PWAInstallPrompt = () => {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm z-50">
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+      <div className="jj-toast-surface-bottom bg-white rounded-lg shadow-lg border border-gray-200 p-4">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-white text-lg">🕌</span>
