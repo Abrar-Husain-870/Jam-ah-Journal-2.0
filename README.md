@@ -129,11 +129,7 @@ src/
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, conventions, and pull request guidelines.
 
 ## License
 
