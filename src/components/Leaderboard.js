@@ -14,14 +14,12 @@ import {
   Star,
   Calendar,
   TrendingUp,
-  Flame,
   Target,
   Zap,
   BarChart3,
   TrendingDown,
   Minus,
   X,
-  Clock,
   Lock
 } from 'lucide-react';
 import { 
@@ -1204,26 +1202,6 @@ const Leaderboard = () => {
   const lbPillBase =
     'inline-flex items-center gap-1 px-2 py-1 rounded-jj text-xs font-medium ring-1 ring-inset';
 
-  const getStreakBadge = (streak) => {
-    if (streak === 0) return null;
-
-    const tier =
-      streak >= 30
-        ? 'ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300'
-        : streak >= 14
-          ? 'ring-black/[0.07] dark:ring-white/[0.09] bg-jj-mist/90 dark:bg-white/[0.06] text-jj-ink dark:text-stone-200'
-          : streak >= 7
-            ? 'ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-ink dark:text-stone-300'
-            : 'ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/60 dark:bg-white/[0.04] text-jj-muted dark:text-stone-400';
-
-    return (
-      <div className={`${lbPillBase} ${tier}`}>
-        <Flame className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
-        {streak}d
-      </div>
-    );
-  };
-
   const getConsistencyBadge = (consistency) => {
     if (consistency === 0) return null;
 
@@ -1240,34 +1218,6 @@ const Leaderboard = () => {
       <div className={`${lbPillBase} ${tier}`}>
         <Target className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
         {consistency.toFixed(0)}%
-      </div>
-    );
-  };
-
-  const getLastTrackedBadge = (daysSince) => {
-    if (daysSince === undefined || daysSince === null) return null;
-
-    const tier =
-      daysSince === 0
-        ? 'ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300'
-        : daysSince <= 2
-          ? 'ring-black/[0.07] dark:ring-white/[0.09] bg-jj-mist/90 dark:bg-white/[0.06] text-jj-ink dark:text-stone-200'
-          : daysSince <= 7
-            ? 'ring-amber-900/10 dark:ring-amber-500/15 bg-amber-50/85 dark:bg-amber-950/30 text-amber-900/90 dark:text-amber-200/95'
-            : 'ring-red-200/70 dark:ring-red-500/20 bg-red-50/90 dark:bg-red-950/35 text-red-800 dark:text-red-300/95';
-
-    const getDisplayText = (days) => {
-      if (days === 0) return 'Today';
-      if (days === 1) return '1d ago';
-      if (days <= 7) return `${days}d ago`;
-      if (days <= 30) return `${days}d ago`;
-      return '30+ days';
-    };
-
-    return (
-      <div className={`${lbPillBase} ${tier}`}>
-        <Clock className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
-        {getDisplayText(daysSince)}
       </div>
     );
   };
@@ -1510,18 +1460,17 @@ const Leaderboard = () => {
         </div>
       </div>
         
-      {/* Metrics Row */}
+      {/* Metrics Row — Best, Consistency, Masjid only */}
       {user.totalDays > 0 && (
         <div className={`flex items-center gap-2 sm:gap-3 mt-3 ${isInactive ? 'opacity-75' : ''}`}>
-          {/* Current Streak */}
           <div className="flex flex-col items-center gap-0.5">
-            <span className={`text-xs ${metaClass} font-medium`}>Current</span>
-            {user.currentStreak > 0 ? (
+            <span className={`text-xs ${metaClass} font-medium`}>Best</span>
+            {user.bestStreak > 0 ? (
               <div
                 className={`${lbPillBase} ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300`}
               >
-                <Flame className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
-                {user.currentStreak}d
+                <Trophy className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
+                {user.bestStreak}d
               </div>
             ) : (
               <span
@@ -1531,27 +1480,20 @@ const Leaderboard = () => {
               </span>
             )}
           </div>
-          
-          {/* Best Streak (only if different from current) */}
-          {user.bestStreak > 0 && user.bestStreak !== user.currentStreak && (
-            <div className="flex flex-col items-center gap-0.5">
-              <span className={`text-xs ${metaClass} font-medium`}>Best</span>
-              <div
-                className={`${lbPillBase} ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300`}
-              >
-                <Trophy className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
-                {user.bestStreak}d
-              </div>
-            </div>
-          )}
-          
-          {/* Consistency Badge */}
+
           <div className="flex flex-col items-center gap-0.5">
             <span className={`text-xs ${metaClass} font-medium`}>Consistency</span>
-            {getConsistencyBadge(user.consistency)}
+            {user.consistency > 0 ? (
+              getConsistencyBadge(user.consistency)
+            ) : (
+              <span
+                className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
+              >
+                0%
+              </span>
+            )}
           </div>
-          
-          {/* Masjid Percentage - only show for users not in masjid mode */}
+
           {!user.masjidMode && (
             <div className="flex flex-col items-center gap-0.5">
               <span className={`text-xs ${metaClass} font-medium`}>Masjid</span>
@@ -1566,12 +1508,6 @@ const Leaderboard = () => {
               )}
             </div>
           )}
-          
-          {/* Last Tracked */}
-          <div className="flex flex-col items-center gap-0.5">
-            <span className={`text-xs ${metaClass} font-medium`}>Last</span>
-            {getLastTrackedBadge(user.daysSinceLastActivity)}
-          </div>
         </div>
       )}
       
@@ -2033,24 +1969,42 @@ const Leaderboard = () => {
                         
                         {/* Competitive Metrics Row - Always show for users with data */}
                         {friend.totalDays > 0 && (
-                          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-jj-border/60 dark:border-white/[0.08]">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {/* Always show streak (0 if no streak) */}
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-jj-muted dark:text-stone-500">Streak:</span>
-                                {friend.currentStreak > 0 ? getStreakBadge(friend.currentStreak) : (
-                                  <span
-                                    className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
-                                  >
-                                    0d
-                                  </span>
-                                )}
-                              </div>
-                              
-                              {/* Always show consistency */}
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-jj-muted dark:text-stone-500">Consistency:</span>
-                                {friend.consistency > 0 ? getConsistencyBadge(friend.consistency) : (
+                          <div className="flex items-center gap-2 sm:gap-3 mt-3 pt-3 border-t border-jj-border/60 dark:border-white/[0.08]">
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-xs text-jj-muted dark:text-stone-500 font-medium">Best</span>
+                              {friend.bestStreak > 0 ? (
+                                <div
+                                  className={`${lbPillBase} ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300`}
+                                >
+                                  <Trophy className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
+                                  {friend.bestStreak}d
+                                </div>
+                              ) : (
+                                <span
+                                  className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
+                                >
+                                  0d
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-xs text-jj-muted dark:text-stone-500 font-medium">Consistency</span>
+                              {friend.consistency > 0 ? (
+                                getConsistencyBadge(friend.consistency)
+                              ) : (
+                                <span
+                                  className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
+                                >
+                                  0%
+                                </span>
+                              )}
+                            </div>
+                            {!friend.masjidMode && (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span className="text-xs text-jj-muted dark:text-stone-500 font-medium">Masjid</span>
+                                {friend.masjidPercentage > 0 ? (
+                                  getMasjidBadge(friend.masjidPercentage)
+                                ) : (
                                   <span
                                     className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
                                   >
@@ -2058,34 +2012,7 @@ const Leaderboard = () => {
                                   </span>
                                 )}
                               </div>
-                              
-                              {/* Show masjid percentage only for users not in masjid mode */}
-                              {!friend.masjidMode && (
-                                <div className="flex items-center gap-1">
-                                  <span className="text-xs text-jj-muted dark:text-stone-500">Masjid:</span>
-                                  {friend.masjidPercentage > 0 ? getMasjidBadge(friend.masjidPercentage) : (
-                                    <span
-                                      className={`${lbPillBase} ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500`}
-                                    >
-                                      0%
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                              
-                              {/* Last Tracked */}
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-jj-muted dark:text-stone-500">Last:</span>
-                                {getLastTrackedBadge(friend.daysSinceLastActivity)}
-                              </div>
-                              
-                              {/* Show best streak only if significantly higher than current */}
-                              {friend.bestStreak > friend.currentStreak && friend.bestStreak > 7 && (
-                                <div className="flex items-center gap-1">
-                                  <span className="text-xs text-gray-400">Best: {friend.bestStreak}d</span>
-                                </div>
-                              )}
-                            </div>
+                            )}
                           </div>
                         )}
                       </div>
