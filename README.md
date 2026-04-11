@@ -137,7 +137,8 @@ src/
 
 ## License
 
-This project is licensed under the MIT License.
+- **This project’s source code** is licensed under the [MIT License](./LICENSE) (SPDX: `MIT`).
+- **Third-party libraries** (React, Firebase, Chart.js, Tailwind, etc.) remain under their respective licenses. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for a summary and where to find each package’s full license text in `node_modules`.
 
 ## Support
 
