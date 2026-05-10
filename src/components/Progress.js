@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Line } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
 import {
   getLineChartOptions,
   getChartColors,
   getSparklineOptions,
   axisLabelForTrendDate,
   getLinePointMarkerDatasetStyle,
+  getBarChartOptions,
+  getMutedStatusColors,
 } from '../lib/chartTheme';
 import { ensureChartsRegistered, ChartJS } from '../lib/registerCharts';
 import { useAuth } from '../contexts/AuthContext';
@@ -46,6 +48,398 @@ import {
   buildLastNDaysSlotCompletionSeries,
 } from '../analytics/progressDerivations';
 
+// Process heat map activity data for Heat.js
+const processHeatMapData = (prayerData) => {
+  if (!prayerData) return [];
+  
+  const data = [];
+  
+  Object.entries(prayerData).forEach(([date, dayData]) => {
+    // Calculate daily score based on prayer statuses
+    let dailyScore = 0;
+    let completedPrayers = 0;
+    let hasAnyPrayer = false;
+    
+    Object.values(PRAYER_TYPES).forEach(prayer => {
+      const status = dayData[prayer];
+      if (status !== undefined && status !== null && status !== '') {
+        hasAnyPrayer = true;
+        completedPrayers++;
+        // Score based on prayer status
+        switch (status) {
+          case PRAYER_STATUS.MASJID:
+            dailyScore += 27;
+            break;
+          case PRAYER_STATUS.HOME:
+            dailyScore += 27;
+            break;
+          case PRAYER_STATUS.QAZA:
+            dailyScore += 13;
+            break;
+          case PRAYER_STATUS.NOT_PRAYED:
+            dailyScore += 0;
+            break;
+        }
+      }
+    });
+    
+    // Determine activity level (0-4) based on daily score and completion
+    let level = 0;
+    if (hasAnyPrayer && completedPrayers === 5) {
+      if (dailyScore >= 135) level = 4; // Perfect day (all prayers in masjid/home)
+      else if (dailyScore >= 100) level = 3; // Very good day (high score)
+      else if (dailyScore >= 50) level = 2; // Good day (moderate score)
+      else level = 1; // Some prayers completed
+    } else if (hasAnyPrayer && completedPrayers > 0) {
+      level = 1; // Partial day (some prayers completed)
+    }
+    
+    // Create meaningful trend type based on actual prayer data
+    let trendType = 'No Data';
+    if (hasAnyPrayer) {
+      if (level === 4) trendType = 'Perfect Day';
+      else if (level === 3) trendType = 'Excellent';
+      else if (level === 2) trendType = 'Good';
+      else if (level === 1) trendType = 'Partial';
+    }
+    
+    // Heat.js format: Include all days with meaningful data
+    data.push({
+      date: new Date(date),
+      trendType: trendType,
+      value: completedPrayers,
+      score: dailyScore,
+      level: level,
+      hasData: hasAnyPrayer
+    });
+  });
+  
+  console.log('Heat map processed data:', data.length, 'items');
+  console.log('Sample data:', data.slice(0, 3));
+  return data;
+};
+
+// Process prayer-wise performance data for bar chart
+const processPrayerWisePerformance = (prayerData) => {
+  const prayerNames = {
+    [PRAYER_TYPES.FAJR]: 'Fajr',
+    [PRAYER_TYPES.DHUHR]: 'Dhuhr',
+    [PRAYER_TYPES.ASR]: 'Asr',
+    [PRAYER_TYPES.MAGHRIB]: 'Maghrib',
+    [PRAYER_TYPES.ISHA]: 'Isha'
+  };
+
+  const statusCounts = {};
+  
+  // Initialize counts for each prayer
+  Object.values(PRAYER_TYPES).forEach(prayer => {
+    statusCounts[prayer] = {
+      [PRAYER_STATUS.MASJID]: 0,
+      [PRAYER_STATUS.HOME]: 0,
+      [PRAYER_STATUS.QAZA]: 0,
+      [PRAYER_STATUS.NOT_PRAYED]: 0
+    };
+  });
+
+  // Count occurrences for each prayer status
+  Object.values(prayerData).forEach(dayData => {
+    Object.values(PRAYER_TYPES).forEach(prayer => {
+      const status = dayData[prayer];
+      if (status && statusCounts[prayer][status] !== undefined) {
+        statusCounts[prayer][status]++;
+      }
+    });
+  });
+
+  // Transform data for chart
+  const labels = Object.values(PRAYER_TYPES).map(prayer => prayerNames[prayer]);
+  const datasets = [
+    {
+      label: 'Masjid',
+      data: Object.values(PRAYER_TYPES).map(prayer => statusCounts[prayer][PRAYER_STATUS.MASJID]),
+    },
+    {
+      label: 'Home',
+      data: Object.values(PRAYER_TYPES).map(prayer => statusCounts[prayer][PRAYER_STATUS.HOME]),
+    },
+    {
+      label: 'Qaza',
+      data: Object.values(PRAYER_TYPES).map(prayer => statusCounts[prayer][PRAYER_STATUS.QAZA]),
+    },
+    {
+      label: 'Not Prayed',
+      data: Object.values(PRAYER_TYPES).map(prayer => statusCounts[prayer][PRAYER_STATUS.NOT_PRAYED]),
+    }
+  ];
+
+  return { labels, datasets };
+};
+
+// Custom Heat Map Component (without external dependencies)
+const HeatMapComponent = React.memo(({ data, isDark }) => {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [timePeriod, setTimePeriod] = useState(() => {
+    // Load saved default from localStorage or use '3months' as fallback
+    return localStorage.getItem('heatmap-default-period') || '3months';
+  });
+
+  // Filter data based on selected time period
+  const getFilteredData = () => {
+    if (data.length === 0) return [];
+    
+    const now = new Date();
+    let startDate = new Date();
+    
+    switch (timePeriod) {
+      case '1month':
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case '3months':
+        startDate.setMonth(now.getMonth() - 3);
+        break;
+      case '6months':
+        startDate.setMonth(now.getMonth() - 6);
+        break;
+      case '1year':
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case 'all':
+        // Return all data
+        return data;
+      default:
+        startDate.setMonth(now.getMonth() - 3);
+    }
+    
+    return data.filter(item => new Date(item.date) >= startDate);
+  };
+
+  const filteredData = getFilteredData();
+
+  // Check if current period is the default
+  const isCurrentDefault = timePeriod === localStorage.getItem('heatmap-default-period');
+
+  // Set default time period
+  const setDefaultPeriod = () => {
+    localStorage.setItem('heatmap-default-period', timePeriod);
+  };
+
+  // Get color based on prayer level
+  const getColor = (level) => {
+    if (isDark) {
+      switch (level) {
+        case 4: return '#22c55e'; // Bright green
+        case 3: return '#86efac'; // Medium green  
+        case 2: return '#bbf7d0'; // Light green
+        case 1: return '#dcfce7'; // Very light green
+        default: return '#374151'; // Dark grey
+      }
+    } else {
+      switch (level) {
+        case 4: return '#16a34a'; // Dark green
+        case 3: return '#22c55e'; // Bright green
+        case 2: return '#4ade80'; // Medium green
+        case 1: return '#86efac'; // Light green
+        default: return '#e5e7eb'; // Light grey
+      }
+    }
+  };
+
+  // Generate calendar grid
+  const generateCalendarGrid = () => {
+    if (filteredData.length === 0) return [];
+
+    const sortedData = [...filteredData].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const startDate = new Date(sortedData[0].date);
+    const endDate = new Date(sortedData[sortedData.length - 1].date);
+    
+    const grid = [];
+    const currentDate = new Date(startDate);
+    
+    // Adjust to start on Monday (1) instead of Sunday (0) for proper alignment
+    const dayOfWeek = currentDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so go back 6 days to Monday
+    currentDate.setDate(currentDate.getDate() - daysToMonday);
+    
+    while (currentDate <= endDate || grid.length % 7 !== 0) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const dataItem = sortedData.find(item => 
+        item.date.toISOString().split('T')[0] === dateStr
+      );
+      
+      grid.push({
+        date: new Date(currentDate),
+        data: dataItem,
+        isCurrentMonth: currentDate.getMonth() === startDate.getMonth()
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return grid;
+  };
+
+  const grid = generateCalendarGrid();
+  const weeks = [];
+  for (let i = 0; i < grid.length; i += 7) {
+    weeks.push(grid.slice(i, i + 7));
+  }
+
+  const getTooltipText = (item) => {
+    if (!item.data) {
+      return `${item.date.toLocaleDateString()}: No data`;
+    }
+    return `${item.date.toLocaleDateString()}: ${item.data.trendType} (${item.data.value}/5 prayers)`;
+  };
+
+  return (
+    <div className="w-full overflow-x-auto mb-4">
+      {/* Time period filter buttons */}
+      <div className="flex flex-wrap items-center justify-between mb-4">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: '1month', label: '1 Month' },
+            { value: '3months', label: '3 Months' },
+            { value: '6months', label: '6 Months' },
+            { value: '1year', label: '1 Year' },
+            { value: 'all', label: 'All Time' }
+          ].map(period => (
+            <button
+              key={period.value}
+              onClick={() => setTimePeriod(period.value)}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                timePeriod === period.value
+                  ? 'text-white'
+                  : isDark
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              style={{
+                backgroundColor: timePeriod === period.value ? 'rgb(5, 150, 105)' : undefined
+              }}
+            >
+              {period.label}
+            </button>
+          ))}
+        </div>
+        
+        {/* Set as default button */}
+        {!isCurrentDefault && (
+          <div className="mt-2 sm:mt-0">
+            <button
+              onClick={setDefaultPeriod}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors border ${
+                isDark
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+              }`}
+              title={`Set "${timePeriod === 'all' ? 'All time' : timePeriod.replace('months', ' months').replace('month', ' month').replace('year', ' year')}" as default`}
+            >
+              Set as default
+            </button>
+          </div>
+        )}
+      </div>
+      
+      <div className="inline-block">
+        {/* Month labels */}
+        <div className="flex items-center mb-2">
+          <div className="w-12"></div>
+          <div className="flex">
+            {Array.from(new Set(weeks.map((week, weekIndex) => {
+              if (week[0]) {
+                return week[0].date.toLocaleDateString('en', { month: 'short', year: 'numeric' });
+              }
+              return '';
+            }))).map((month, index) => (
+              <div key={index} className="text-xs text-gray-500 mx-2">
+                {month}
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Main heat map grid */}
+        <div className="flex items-start">
+          {/* Weekday labels */}
+          <div className="flex flex-col mr-2">
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Mon</div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Wed</div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Fri</div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Sun</div>
+          </div>
+          
+          {/* Calendar grid */}
+          <div className="flex">
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="flex flex-col mr-1">
+                {week.map((day, dayIndex) => (
+                  <div
+                    key={dayIndex}
+                    className="w-3 h-3 rounded-sm cursor-pointer transition-all hover:scale-110 mb-1"
+                    style={{
+                      backgroundColor: getColor(day.data?.level || 0),
+                      opacity: day.isCurrentMonth ? 1 : 0.3
+                    }}
+                    title={getTooltipText(day)}
+                    onClick={() => setSelectedDate(day)}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Legend */}
+        <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
+          <div className="flex items-center space-x-4">
+            <span>Less</span>
+            <div className="flex space-x-1">
+              {[0, 1, 2, 3, 4].map(level => (
+                <div
+                  key={level}
+                  className="w-3 h-3 rounded-sm"
+                  style={{ backgroundColor: getColor(level) }}
+                />
+              ))}
+            </div>
+            <span>More</span>
+          </div>
+          
+          {selectedDate && (
+            <div className="text-right">
+              <div>{selectedDate.date.toLocaleDateString()}</div>
+              <div>{selectedDate.data ? selectedDate.data.trendType : 'No data'}</div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Info display */}
+      <div className="mt-3">
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center space-x-2">
+            <span className="font-semibold text-gray-700 dark:text-gray-300">Prayer Activity</span>
+            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400">
+              {filteredData.length} days
+            </span>
+            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400">
+              {timePeriod === 'all' ? 'All time' : timePeriod.replace('months', ' months').replace('month', ' month').replace('year', ' year')}
+            </span>
+          </div>
+          {filteredData.length > 0 && (
+            <div className="text-gray-500 dark:text-gray-400">
+              {filteredData[0].date.toLocaleDateString()} – {filteredData[filteredData.length-1].date.toLocaleDateString()}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const Progress = () => {
   const { currentUser } = useAuth();
   const { resolvedTheme } = useTheme();
@@ -63,6 +457,33 @@ const Progress = () => {
   const [isSmallScreen, setIsSmallScreen] = useState(typeof window !== 'undefined' ? window.innerWidth < 480 : false);
   const [atAGlance, setAtAGlance] = useState(null);
   const chartRef = useRef(null);
+
+  const topKpiKey = React.useMemo(() => {
+    if (!stats) return null;
+
+    const maxPossibleAverage = 145;
+    const averageNorm = Math.min(((stats.averageScore ?? 0) / maxPossibleAverage) * 100, 100);
+    const consistencyNorm = Math.max(0, Math.min(stats.consistency ?? 0, 100));
+    const currentStreakNorm = Math.min(((stats.currentStreak ?? 0) / 30) * 100, 100);
+    const bestStreakNorm = Math.min(((stats.bestStreak ?? 0) / 30) * 100, 100);
+
+    let dayCap = 365;
+    if (timeframe === 'recent') dayCap = 30;
+    if (timeframe === 'month') dayCap = new Date(selectedYear, selectedMonth, 0).getDate();
+    if (timeframe === 'year') dayCap = 365;
+    const completedDaysNorm = Math.min(((stats.totalDays ?? 0) / Math.max(1, dayCap)) * 100, 100);
+
+    const candidates = [
+      { key: 'completedDays', score: completedDaysNorm },
+      { key: 'consistency', score: consistencyNorm },
+      { key: 'currentStreak', score: currentStreakNorm },
+      { key: 'bestStreak', score: bestStreakNorm },
+      { key: 'averageScore', score: averageNorm },
+    ];
+
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0]?.key || null;
+  }, [stats, timeframe, selectedMonth, selectedYear]);
 
   useEffect(() => {
     ensureChartsRegistered();
@@ -194,9 +615,18 @@ const Progress = () => {
         setDailyTrend(trend);
 
         const spark = buildLastNDaysSlotCompletionSeries(last7Map, 7, now);
+        
+        // Process prayer-wise performance data for bar chart
+        const prayerWiseData = processPrayerWisePerformance(prayerData);
+        
+        // Process heat map activity data
+        const heatMapData = processHeatMapData(prayerData);
+        
         setAtAGlance({
           weekSparkLabels: spark.labels,
           weekSparkValues: spark.values,
+          prayerWiseData: prayerWiseData,
+          heatMapData: heatMapData,
         });
 
         // Build cumulative series using raw prayer data and leaderboard formulas
@@ -393,6 +823,68 @@ const Progress = () => {
 
   const sparkLineOptions = React.useMemo(() => getSparklineOptions(isDark), [isDark]);
 
+  // Prayer-wise performance bar chart data
+  const prayerWiseData = React.useMemo(() => {
+    if (!atAGlance?.prayerWiseData) return null;
+    
+    // Custom distinguishable colors within app theme
+    const customColors = isDark ? {
+      masjid: '#10b981',    // emerald green
+      home: '#06b6d4',      // cyan  
+      qaza: '#f59e0b',      // amber
+      notPrayed: '#ef4444', // red (more distinct)
+    } : {
+      masjid: '#059669',    // darker emerald
+      home: '#0891b2',      // darker cyan
+      qaza: '#d97706',      // darker amber
+      notPrayed: '#dc2626', // darker red
+    };
+    
+    const datasets = atAGlance.prayerWiseData.datasets.map((dataset, index) => {
+      let backgroundColor;
+      switch (dataset.label) {
+        case 'Masjid':
+          backgroundColor = customColors.masjid;
+          break;
+        case 'Home':
+          backgroundColor = customColors.home;
+          break;
+        case 'Qaza':
+          backgroundColor = customColors.qaza;
+          break;
+        case 'Not Prayed':
+          backgroundColor = customColors.notPrayed;
+          break;
+        default:
+          backgroundColor = customColors.home;
+      }
+      
+      return {
+        ...dataset,
+        backgroundColor,
+        borderColor: backgroundColor,
+        borderWidth: 0,
+      };
+    });
+    
+    return {
+      labels: atAGlance.prayerWiseData.labels,
+      datasets,
+    };
+  }, [atAGlance, isDark]);
+
+  // Heat map data processing for Heat.js
+  const heatMapData = React.useMemo(() => {
+    if (!atAGlance?.heatMapData) return [];
+    return atAGlance.heatMapData;
+  }, [atAGlance]);
+
+  const prayerWiseOptions = React.useMemo(() => getBarChartOptions(isDark, {
+    stacked: false,
+    compactLegend: true,
+    isMobile: isSmallScreen,
+  }), [isDark, isSmallScreen]);
+
   // Trend chart configuration — shared axis rules from chartTheme (mobile: Jan 8 · desktop: d/m/yy)
   const trendLabels = React.useMemo(() => {
     const source = cumulativeTrend.length > 0 ? cumulativeTrend : dailyTrend;
@@ -586,7 +1078,7 @@ const Progress = () => {
       case 'recent':
         return 'Last 30 Days';
       case 'alltime':
-        return 'All Time';
+        return '';
       default:
         return '';
     }
@@ -727,23 +1219,27 @@ const Progress = () => {
           label="Completed Days"
           value={stats.totalDays ?? 0}
           icon={Calendar}
+          emphasize={true}
         />
         <KPIStatCard
           label="Consistency %"
           value={`${(stats.consistency ?? 0).toFixed(1)}%`}
           icon={Target}
+          emphasize={true}
         />
         <KPIStatCard
           label="Current Streak"
           value={stats.currentStreak ?? 0}
           hint="days"
           icon={Zap}
+          emphasize={true}
         />
         <KPIStatCard
           label="Best Streak"
           value={stats.bestStreak ?? 0}
           hint="days"
           icon={Trophy}
+          emphasize={true}
         />
         <KPIStatCard
           label="Missed Prayers"
@@ -753,11 +1249,13 @@ const Progress = () => {
               : 0
           ).toFixed(1)}%`}
           icon={X}
+          emphasize={true}
         />
         <KPIStatCard
           label="Average Score"
           value={(stats.averageScore ?? 0).toFixed(2)}
           icon={BarChart3}
+          emphasize={true}
         />
       </div>
 
@@ -781,110 +1279,131 @@ const Progress = () => {
                 masjidMode ? 'md:grid-cols-3 lg:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-4'
               }`}
             >
-              {masjidMode ? (
-                <>
-                  {/* Home */}
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-3">
-                      <div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white"
-                        style={{ backgroundColor: PRAYER_COLORS[PRAYER_STATUS.HOME] }}
-                      >
-                        {getPrayerStatusIcon(PRAYER_STATUS.HOME)}
-                      </div>
-                    </div>
-                    <h4 className="font-semibold text-gray-800 mb-1">Home</h4>
-                    <p className="text-2xl font-bold text-gray-900">{stats.prayerBreakdown[PRAYER_STATUS.HOME]}</p>
-                    <p className="text-sm text-gray-600">{stats.totalPrayers > 0 ? ((stats.prayerBreakdown[PRAYER_STATUS.HOME] / stats.totalPrayers) * 100).toFixed(1) : 0}%</p>
-                  </div>
+              {(() => {
+                // Same custom colors as prayer-wise performance chart
+                const customColors = isDark ? {
+                  masjid: '#10b981',    // emerald green
+                  home: '#06b6d4',      // cyan  
+                  qaza: '#f59e0b',      // amber
+                  notPrayed: '#ef4444', // red (more distinct)
+                } : {
+                  masjid: '#059669',    // darker emerald
+                  home: '#0891b2',      // darker cyan
+                  qaza: '#d97706',      // darker amber
+                  notPrayed: '#dc2626', // darker red
+                };
 
-                  {/* Qaza */}
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-3">
-                      <div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white"
-                        style={{ backgroundColor: PRAYER_COLORS[PRAYER_STATUS.QAZA] }}
-                      >
-                        {getPrayerStatusIcon(PRAYER_STATUS.QAZA)}
-                      </div>
-                    </div>
-                    <h4 className="font-semibold text-gray-800 mb-1">Qaza</h4>
-                    <p className="text-2xl font-bold text-gray-900">{stats.prayerBreakdown[PRAYER_STATUS.QAZA]}</p>
-                    <p className="text-sm text-gray-600">{stats.totalPrayers > 0 ? ((stats.prayerBreakdown[PRAYER_STATUS.QAZA] / stats.totalPrayers) * 100).toFixed(1) : 0}%</p>
-                  </div>
+                const getStatusColor = (status) => {
+                  switch (status) {
+                    case PRAYER_STATUS.MASJID: return customColors.masjid;
+                    case PRAYER_STATUS.HOME: return customColors.home;
+                    case PRAYER_STATUS.QAZA: return customColors.qaza;
+                    case PRAYER_STATUS.NOT_PRAYED: return customColors.notPrayed;
+                    default: return customColors.home;
+                  }
+                };
 
-                  {/* Not Prayed */}
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-3">
-                      <div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white"
-                        style={{ backgroundColor: PRAYER_COLORS[PRAYER_STATUS.NOT_PRAYED] }}
-                      >
-                        {getPrayerStatusIcon(PRAYER_STATUS.NOT_PRAYED)}
-                      </div>
-                    </div>
-                    <h4 className="font-semibold text-gray-800 mb-1">Not Prayed</h4>
-                    <p className="text-2xl font-bold text-gray-900">{stats.prayerBreakdown[PRAYER_STATUS.NOT_PRAYED]}</p>
-                    <p className="text-sm text-gray-600">{stats.totalPrayers > 0 ? ((stats.prayerBreakdown[PRAYER_STATUS.NOT_PRAYED] / stats.totalPrayers) * 100).toFixed(1) : 0}%</p>
-                  </div>
-                </>
-              ) : (
-                // Standard mode: original four tiles
-                <>
-                  {Object.entries(stats.prayerBreakdown).map(([status, count]) => {
-                    const percentage = stats.totalPrayers > 0 ? (count / stats.totalPrayers * 100).toFixed(1) : 0;
-                    return (
-                      <div key={status} className="text-center">
+                // Define the order: masjid, home, qaza, not prayed
+                const statusOrder = [
+                  { key: PRAYER_STATUS.MASJID, label: 'Masjid' },
+                  { key: PRAYER_STATUS.HOME, label: 'Home' },
+                  { key: PRAYER_STATUS.QAZA, label: 'Qaza' },
+                  { key: PRAYER_STATUS.NOT_PRAYED, label: 'Not Prayed' }
+                ];
+
+                return masjidMode ? (
+                  // Masjid mode: show home, qaza, not prayed in round shape
+                  <>
+                    {statusOrder.filter(status => status.key !== PRAYER_STATUS.MASJID).map((status) => (
+                      <div key={status.key} className="text-center">
                         <div className="flex items-center justify-center mb-3">
                           <div 
                             className="w-12 h-12 rounded-full flex items-center justify-center text-white"
-                            style={{ backgroundColor: PRAYER_COLORS[status] }}
+                            style={{ backgroundColor: getStatusColor(status.key) }}
                           >
-                            {getPrayerStatusIcon(status)}
+                            {getPrayerStatusIcon(status.key)}
                           </div>
                         </div>
-                        <h4 className="font-semibold text-gray-800 mb-1">
-                          {status === PRAYER_STATUS.MASJID ? 'Masjid' :
-                           status === PRAYER_STATUS.HOME ? 'Home' :
-                           status === PRAYER_STATUS.QAZA ? 'Qaza' : 'Not Prayed'}
-                        </h4>
-                        <p className="text-2xl font-bold text-gray-900">{count}</p>
-                        <p className="text-sm text-gray-600">{percentage}%</p>
+                        <h4 className="font-semibold text-gray-800 mb-1">{status.label}</h4>
+                        <p className="text-2xl font-bold text-gray-900">{stats.prayerBreakdown[status.key]}</p>
+                        <p className="text-sm text-gray-600">{stats.totalPrayers > 0 ? ((stats.prayerBreakdown[status.key] / stats.totalPrayers) * 100).toFixed(1) : 0}%</p>
                       </div>
-                    );
-                  })}
-                </>
-              )}
+                    ))}
+                  </>
+                ) : (
+                  // Standard mode: show all four in correct order with round shape
+                  <>
+                    {statusOrder.map((status) => {
+                      const count = stats.prayerBreakdown[status.key] || 0;
+                      const percentage = stats.totalPrayers > 0 ? (count / stats.totalPrayers * 100).toFixed(1) : 0;
+                      return (
+                        <div key={status.key} className="text-center">
+                          <div className="flex items-center justify-center mb-3">
+                            <div 
+                              className="w-12 h-12 rounded-full flex items-center justify-center text-white"
+                              style={{ backgroundColor: getStatusColor(status.key) }}
+                            >
+                              {getPrayerStatusIcon(status.key)}
+                            </div>
+                          </div>
+                          <h4 className="font-semibold text-gray-800 mb-1">{status.label}</h4>
+                          <p className="text-2xl font-bold text-gray-900">{count}</p>
+                          <p className="text-sm text-gray-600">{percentage}%</p>
+                        </div>
+                      );
+                    })}
+                  </>
+                );
+              })()}
             </div>
           </AnalyticsCard>
         </AnalyticsSection>
 
         <ChartCard
-          id="spark-week"
-          eyebrow="Last 7 days"
-          title="Weekly pulse"
-          description="Last 7 days: % of the five prayers with a logged status (not &quot;not prayed&quot;)."
-          minHeightClass="min-h-[212px] sm:min-h-[236px]"
+          id="prayer-wise-performance"
+          eyebrow={getTimeframeLabel()}
+          title="Prayer-wise Performance"
+          description={`${getTimeframeLabel()} Count of each prayer status by prayer type.`}
+          minHeightClass="min-h-[280px] sm:min-h-[320px]"
         >
-          {sparkLineData ? (
-            <div className="h-[212px] sm:h-[236px] w-full" role="img" aria-label="Seven day prayer completion trend">
-              <Line data={sparkLineData} options={sparkLineOptions} />
+          {prayerWiseData ? (
+            <div className="h-[280px] sm:h-[320px] w-full" role="img" aria-label="Prayer-wise performance breakdown">
+              <Bar data={prayerWiseData} options={prayerWiseOptions} />
             </div>
           ) : (
             <EmptyStateCard
               className="border-0 shadow-none bg-transparent py-8"
               icon={Calendar}
-              title="Week view needs entries"
-              body="Log days this week to see the sparkline."
+              title="Prayer data needed"
+              body={`Log days in this period to see prayer-wise performance.`}
+            />
+          )}
+        </ChartCard>
+
+        <ChartCard
+          id="activity-heat-map"
+          eyebrow="Consistency"
+          title="Activity Heat Map"
+          description="Daily prayer completion consistency over the selected timeframe."
+          minHeightClass="min-h-[200px] sm:min-h-[220px]"
+        >
+          {heatMapData.length > 0 ? (
+            <HeatMapComponent data={heatMapData} isDark={isDark} />
+          ) : (
+            <EmptyStateCard
+              className="border-0 shadow-none bg-transparent py-8"
+              icon={Calendar}
+              title="No activity data"
+              body="Log prayers to see your consistency heat map."
             />
           )}
         </ChartCard>
 
         <ChartCard
           id="trajectory-main"
-          eyebrow="Selected range"
+          eyebrow=""
           title="Trajectory"
-          description="Average or composite score over the selected range. Pinch or use zoom controls."
+          description="Average or composite score over the selected range."
           minHeightClass="min-h-[292px]"
           headerRight={
             <div className="flex flex-wrap gap-1.5 justify-end max-w-full p-1 rounded-jj-lg bg-jj-mist/70 dark:bg-white/[0.04] ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
