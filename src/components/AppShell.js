@@ -46,7 +46,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-jj-canvas text-jj-ink dark:bg-jj-canvas-dark dark:text-stone-200 font-sans antialiased pb-[calc(4.85rem+env(safe-area-inset-bottom,0px))] sm:pb-0 selection:bg-teal-200/45 dark:selection:bg-teal-900/45">
       <header className="sticky top-0 z-40 bg-jj-surface/88 dark:bg-jj-surface-dark/90 backdrop-blur-xl backdrop-saturate-150 border-b border-black/[0.04] dark:border-white/[0.06] shadow-[0_1px_0_rgba(28,25,23,0.04)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)]">
-        <div className="max-w-2xl lg:max-w-5xl mx-auto px-4 sm:px-8 pt-3.5 pb-3 sm:pt-5 sm:pb-4">
+        <div className="max-w-2xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-8 pt-3.5 pb-3 sm:pt-5 sm:pb-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
@@ -119,7 +119,7 @@ export function AppShell({
       </header>
 
       {!online && (
-        <div className="max-w-2xl lg:max-w-5xl mx-auto px-4 sm:px-8 pt-4 sm:pt-5">
+        <div className="max-w-2xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-8 pt-4 sm:pt-5">
           <div
             role="status"
             className="rounded-jj-xl border border-amber-200/65 dark:border-amber-900/40 bg-amber-50/88 dark:bg-amber-950/35 text-amber-950 dark:text-amber-100/95 text-sm px-4 py-3.5 leading-snug ring-1 ring-amber-900/5 dark:ring-amber-500/10"
@@ -132,12 +132,12 @@ export function AppShell({
       <main
         id="jj-main"
         tabIndex={-1}
-        className="max-w-2xl lg:max-w-5xl mx-auto px-4 sm:px-8 py-5 sm:py-10 lg:py-12 outline-none focus-visible:ring-2 focus-visible:ring-jj-accent/40 focus-visible:ring-offset-4 focus-visible:ring-offset-jj-canvas dark:focus-visible:ring-offset-jj-canvas-dark rounded-sm"
+        className="max-w-2xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-8 py-5 sm:py-10 lg:py-12 outline-none focus-visible:ring-2 focus-visible:ring-jj-accent/40 focus-visible:ring-offset-4 focus-visible:ring-offset-jj-canvas dark:focus-visible:ring-offset-jj-canvas-dark rounded-sm"
       >
         {children}
       </main>
 
-      <footer className="max-w-2xl lg:max-w-5xl mx-auto px-4 sm:px-8 pb-7 sm:pb-10 text-center hidden sm:block">
+      <footer className="max-w-2xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-8 pb-7 sm:pb-10 text-center hidden sm:block">
         <p className="text-2xs text-jj-muted dark:text-stone-500 tracking-cap font-medium">
           Quiet consistency, honored intention.
         </p>

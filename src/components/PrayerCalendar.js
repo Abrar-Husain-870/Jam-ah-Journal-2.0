@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Calendar from 'react-calendar';
-import { ChevronLeft, ChevronRight, Home, Clock, X, Book, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Clock, X, Book, Lock, Loader2 } from 'lucide-react';
 import { MosqueIcon } from './icons/MosqueIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc, collection, query as fsQuery, where, orderBy, onSnapshot } from 'firebase/firestore';
@@ -33,8 +33,7 @@ const PrayerCalendar = () => {
   const [selectedDayData, setSelectedDayData] = useState({});
   const [masjidMode, setMasjidMode] = useState(false);
   const saveTimersRef = useRef({});
-  const persistToastTimerRef = useRef(null);
-  const [persistToast, setPersistToast] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [outlinedDateStr, setOutlinedDateStr] = useState(null);
 
   const toDateStr = useCallback((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, []);
@@ -162,17 +161,12 @@ const PrayerCalendar = () => {
     };
   }, [currentUser, currentMonth, toDateStr, cacheKeyForRange]);
 
-  useEffect(() => {
-    return () => {
-      if (persistToastTimerRef.current) {
-        clearTimeout(persistToastTimerRef.current);
-      }
-    };
-  }, []);
-
   const handlePrayerStatusChange = (prayer, rawStatus) => {
     if (!currentUser) return;
     if (!online) return;
+
+    // Placeholder selection should never write to Firestore or affect stats.
+    if (rawStatus === '') return;
 
     // Normalize 'clear' to null for deletion
     const status = rawStatus === 'clear' ? null : rawStatus;
@@ -196,6 +190,7 @@ const PrayerCalendar = () => {
     // Debounced save per date key
     if (saveTimersRef.current[dateStr]) clearTimeout(saveTimersRef.current[dateStr]);
     saveTimersRef.current[dateStr] = setTimeout(async () => {
+      setIsSaving(true);
       try {
         await savePrayerStatus(currentUser.uid, selectedDate, prayer, status);
         // Invalidate cached ranges for this user to avoid stale reads on navigation
@@ -221,20 +216,10 @@ const PrayerCalendar = () => {
           const merged = { ...base, [dateStr]: refreshed || {} };
           localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: merged }));
         } catch {}
-        if (persistToastTimerRef.current) clearTimeout(persistToastTimerRef.current);
-        setPersistToast('saved');
-        persistToastTimerRef.current = setTimeout(() => {
-          setPersistToast(null);
-          persistToastTimerRef.current = null;
-        }, 2000);
       } catch (e) {
         console.error('Error updating prayer status:', e);
-        if (persistToastTimerRef.current) clearTimeout(persistToastTimerRef.current);
-        setPersistToast('error');
-        persistToastTimerRef.current = setTimeout(() => {
-          setPersistToast(null);
-          persistToastTimerRef.current = null;
-        }, 5000);
+      } finally {
+        setIsSaving(false);
       }
     }, 200);
   };
@@ -269,21 +254,6 @@ const PrayerCalendar = () => {
         return <X className="w-4 h-4" />;
       default:
         return null;
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case PRAYER_STATUS.MASJID:
-        return 'Masjid';
-      case PRAYER_STATUS.HOME:
-        return masjidMode ? 'Prayed' : 'Home';
-      case PRAYER_STATUS.QAZA:
-        return 'Qaza';
-      case PRAYER_STATUS.NOT_PRAYED:
-        return 'Not Prayed';
-      default:
-        return '';
     }
   };
 
@@ -361,21 +331,13 @@ const PrayerCalendar = () => {
             day: 'numeric' 
           })}
         </h3>
-        {(persistToast === 'saved' || persistToast === 'error') && (
-          <p
-            role="status"
-            aria-live="polite"
-            className={`text-sm -mt-2 mb-4 sm:mb-5 font-medium transition-opacity duration-200 ${
-              persistToast === 'saved'
-                ? 'text-teal-700 dark:text-teal-300'
-                : 'text-red-800/90 dark:text-red-300/95'
-            }`}
-          >
-            {persistToast === 'saved'
-              ? 'Saved to your journal.'
-              : 'Couldn’t save. Check your connection and try again.'}
-          </p>
-        )}
+        <div className="-mt-2 mb-4 sm:mb-5 h-5 flex items-center justify-end">
+          {isSaving && (
+            <span role="status" aria-live="polite" className="text-jj-muted dark:text-stone-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+            </span>
+          )}
+        </div>
         
         <div className="space-y-2.5 sm:space-y-3">
           {Object.values(PRAYER_TYPES).map(prayer => {
@@ -398,15 +360,8 @@ const PrayerCalendar = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-jj-muted dark:text-stone-400 flex items-center gap-1.5 tabular-nums">
-                    {status ? (
-                      <>
-                        {getPrayerIcon(status)}
-                        {getStatusLabel(status)}
-                      </>
-                    ) : (
-                      <span className="text-stone-400 dark:text-stone-500">Pending</span>
-                    )}
+                  <span className="text-jj-muted dark:text-stone-400 w-5 flex items-center justify-center">
+                    {status ? getPrayerIcon(status) : null}
                   </span>
                   
                   {!online && (
@@ -425,8 +380,13 @@ const PrayerCalendar = () => {
                         : 'border border-jj-border dark:border-white/12'
                     }`}
                   >
-                    <option value="">-- Select --</option>
-                    <option value="clear">Clear</option>
+                    {status ? (
+                      <option value="clear">Clear</option>
+                    ) : (
+                      <option value="" disabled>
+                        -- Select --
+                      </option>
+                    )}
                     <option value={PRAYER_STATUS.NOT_PRAYED}>Not Prayed</option>
                     <option value={PRAYER_STATUS.QAZA}>Qaza</option>
                     {!masjidMode && <option value={PRAYER_STATUS.HOME}>Home</option>}
@@ -462,15 +422,10 @@ const PrayerCalendar = () => {
               </div>
               
               <div className="flex items-center gap-2">
-                <span className="text-sm text-jj-muted dark:text-stone-400 flex items-center gap-1.5">
+                <span className="text-jj-muted dark:text-stone-400 w-5 flex items-center justify-center">
                   {selectedDayData && selectedDayData[SURAH_ALKAHF] ? (
-                    <>
-                      <Book className="w-4 h-4" strokeWidth={1.85} />
-                      {selectedDayData[SURAH_ALKAHF] === SURAH_STATUS.RECITED ? 'Recited' : 'Missed'}
-                    </>
-                  ) : (
-                    <span className="text-stone-400 dark:text-stone-500">Pending</span>
-                  )}
+                    <Book className="w-4 h-4" strokeWidth={1.85} />
+                  ) : null}
                 </span>
                 
                 {!online && (
@@ -489,8 +444,13 @@ const PrayerCalendar = () => {
                       : 'border border-violet-300/55 dark:border-violet-500/25 focus-visible:ring-violet-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-elevated-dark'
                   }`}
                 >
-                  <option value="">-- Select --</option>
-                  <option value="clear">Clear</option>
+                  {(selectedDayData && selectedDayData[SURAH_ALKAHF]) ? (
+                    <option value="clear">Clear</option>
+                  ) : (
+                    <option value="" disabled>
+                      -- Select --
+                    </option>
+                  )}
                   <option value={SURAH_STATUS.RECITED}>Recited</option>
                   <option value={SURAH_STATUS.MISSED}>Missed</option>
                 </select>

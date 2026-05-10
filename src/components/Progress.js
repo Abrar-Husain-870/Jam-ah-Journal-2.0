@@ -16,6 +16,10 @@ import {
   Clock,
   Home,
   X,
+  Target,
+  Zap,
+  Trophy,
+  BarChart3,
 } from 'lucide-react';
 import { MosqueIcon } from './icons/MosqueIcon';
 import {
@@ -35,6 +39,7 @@ import {
   ChartCard,
   EmptyStateCard,
   InsightCallout,
+  KPIStatCard,
   SectionHeader,
 } from './analytics';
 import {
@@ -715,6 +720,45 @@ const Progress = () => {
               Viewing <span className="font-medium text-jj-ink dark:text-stone-200">{getTimeframeLabel()}</span>
             </p>
           </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+        <KPIStatCard
+          label="Completed Days"
+          value={stats.totalDays ?? 0}
+          icon={Calendar}
+        />
+        <KPIStatCard
+          label="Consistency %"
+          value={`${(stats.consistency ?? 0).toFixed(1)}%`}
+          icon={Target}
+        />
+        <KPIStatCard
+          label="Current Streak"
+          value={stats.currentStreak ?? 0}
+          hint="days"
+          icon={Zap}
+        />
+        <KPIStatCard
+          label="Best Streak"
+          value={stats.bestStreak ?? 0}
+          hint="days"
+          icon={Trophy}
+        />
+        <KPIStatCard
+          label="Missed Prayers"
+          value={`${(
+            stats.totalPrayers > 0
+              ? ((stats.prayerBreakdown?.[PRAYER_STATUS.NOT_PRAYED] || 0) / stats.totalPrayers) * 100
+              : 0
+          ).toFixed(1)}%`}
+          icon={X}
+        />
+        <KPIStatCard
+          label="Average Score"
+          value={(stats.averageScore ?? 0).toFixed(2)}
+          icon={BarChart3}
+        />
       </div>
 
       <>
