@@ -3,11 +3,9 @@ import { Line, Bar } from 'react-chartjs-2';
 import {
   getLineChartOptions,
   getChartColors,
-  getSparklineOptions,
   axisLabelForTrendDate,
   getLinePointMarkerDatasetStyle,
   getBarChartOptions,
-  getMutedStatusColors,
 } from '../lib/chartTheme';
 import { ensureChartsRegistered, ChartJS } from '../lib/registerCharts';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,7 +31,7 @@ import {
   getPrayerDataInRange,
 } from '../services/analyticsService';
 import { DEBUG_LOGS_ENABLED } from '../config/debug';
-import { PRAYER_STATUS, PRAYER_COLORS, PRAYER_TYPES, PRAYER_SCORES, SURAH_ALKAHF, SURAH_STATUS, SURAH_SCORES } from '../services/prayerService';
+import { PRAYER_STATUS, PRAYER_TYPES, PRAYER_SCORES, SURAH_ALKAHF, SURAH_STATUS, SURAH_SCORES } from '../services/prayerService';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   AnalyticsCard,
@@ -78,6 +76,8 @@ const processHeatMapData = (prayerData) => {
             break;
           case PRAYER_STATUS.NOT_PRAYED:
             dailyScore += 0;
+            break;
+          default:
             break;
         }
       }
@@ -458,33 +458,6 @@ const Progress = () => {
   const [atAGlance, setAtAGlance] = useState(null);
   const chartRef = useRef(null);
 
-  const topKpiKey = React.useMemo(() => {
-    if (!stats) return null;
-
-    const maxPossibleAverage = 145;
-    const averageNorm = Math.min(((stats.averageScore ?? 0) / maxPossibleAverage) * 100, 100);
-    const consistencyNorm = Math.max(0, Math.min(stats.consistency ?? 0, 100));
-    const currentStreakNorm = Math.min(((stats.currentStreak ?? 0) / 30) * 100, 100);
-    const bestStreakNorm = Math.min(((stats.bestStreak ?? 0) / 30) * 100, 100);
-
-    let dayCap = 365;
-    if (timeframe === 'recent') dayCap = 30;
-    if (timeframe === 'month') dayCap = new Date(selectedYear, selectedMonth, 0).getDate();
-    if (timeframe === 'year') dayCap = 365;
-    const completedDaysNorm = Math.min(((stats.totalDays ?? 0) / Math.max(1, dayCap)) * 100, 100);
-
-    const candidates = [
-      { key: 'completedDays', score: completedDaysNorm },
-      { key: 'consistency', score: consistencyNorm },
-      { key: 'currentStreak', score: currentStreakNorm },
-      { key: 'bestStreak', score: bestStreakNorm },
-      { key: 'averageScore', score: averageNorm },
-    ];
-
-    candidates.sort((a, b) => b.score - a.score);
-    return candidates[0]?.key || null;
-  }, [stats, timeframe, selectedMonth, selectedYear]);
-
   useEffect(() => {
     ensureChartsRegistered();
   }, []);
@@ -795,33 +768,6 @@ const Progress = () => {
 
   // Prepare chart data
   const isDark = resolvedTheme === 'dark';
-
-  const sparkLineData = React.useMemo(() => {
-    if (!atAGlance?.weekSparkLabels?.length) return null;
-    const c = getChartColors(isDark);
-    const markers = getLinePointMarkerDatasetStyle(isDark);
-    return {
-      labels: atAGlance.weekSparkLabels,
-      datasets: [
-        {
-          label: 'Five prayers addressed',
-          data: atAGlance.weekSparkValues,
-          borderColor: c.accent,
-          backgroundColor: c.accentFill,
-          fill: true,
-          tension: 0.46,
-          borderWidth: 2.5,
-          pointStyle: 'circle',
-          pointRadius: 4,
-          pointHoverRadius: 7,
-          pointHitRadius: 28,
-          ...markers,
-        },
-      ],
-    };
-  }, [atAGlance, isDark]);
-
-  const sparkLineOptions = React.useMemo(() => getSparklineOptions(isDark), [isDark]);
 
   // Prayer-wise performance bar chart data
   const prayerWiseData = React.useMemo(() => {
@@ -1208,9 +1154,7 @@ const Progress = () => {
               </select>
             )}
 
-            <p className="text-sm text-jj-muted dark:text-stone-400 sm:ml-auto">
-              Viewing <span className="font-medium text-jj-ink dark:text-stone-200">{getTimeframeLabel()}</span>
-            </p>
+            
           </div>
       </div>
 
