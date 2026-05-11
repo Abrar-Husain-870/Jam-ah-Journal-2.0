@@ -20,14 +20,6 @@ function AppContent() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const main = document.getElementById('jj-main');
-    if (main && typeof main.focus === 'function') {
-      try {
-        main.focus({ preventScroll: true });
-      } catch {
-        main.focus();
-      }
-    }
   }, [currentPage]);
 
   if (!currentUser) {

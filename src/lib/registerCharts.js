@@ -3,6 +3,7 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  ArcElement,
   LineElement,
   PointElement,
   Title,
@@ -20,6 +21,7 @@ export function ensureChartsRegistered() {
     CategoryScale,
     LinearScale,
     BarElement,
+    ArcElement,
     LineElement,
     PointElement,
     Title,
@@ -30,5 +32,7 @@ export function ensureChartsRegistered() {
   applyChartJsGlobalFont(ChartJS);
   registered = true;
 }
+
+ensureChartsRegistered();
 
 export { ChartJS };

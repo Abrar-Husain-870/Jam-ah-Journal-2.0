@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Line, Bar } from 'react-chartjs-2';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
   getLineChartOptions,
   getChartColors,
@@ -819,6 +819,75 @@ const Progress = () => {
     };
   }, [atAGlance, isDark]);
 
+  const statusBreakdownData = React.useMemo(() => {
+    if (!stats?.prayerBreakdown) return null;
+
+    const customColors = isDark
+      ? {
+          masjid: '#10b981',
+          home: '#06b6d4',
+          qaza: '#f59e0b',
+          notPrayed: '#ef4444',
+        }
+      : {
+          masjid: '#059669',
+          home: '#0891b2',
+          qaza: '#d97706',
+          notPrayed: '#dc2626',
+        };
+
+    const labels = ['Masjid', 'Home', 'Qaza', 'Not Prayed'];
+    const values = [
+      stats.prayerBreakdown[PRAYER_STATUS.MASJID] || 0,
+      stats.prayerBreakdown[PRAYER_STATUS.HOME] || 0,
+      stats.prayerBreakdown[PRAYER_STATUS.QAZA] || 0,
+      stats.prayerBreakdown[PRAYER_STATUS.NOT_PRAYED] || 0,
+    ];
+
+    return {
+      labels,
+      datasets: [
+        {
+          data: values,
+          backgroundColor: [
+            customColors.masjid,
+            customColors.home,
+            customColors.qaza,
+            customColors.notPrayed,
+          ],
+          borderColor: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.95)',
+          borderWidth: 1,
+          hoverOffset: 6,
+        },
+      ],
+    };
+  }, [stats, isDark]);
+
+  const statusBreakdownOptions = React.useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const label = ctx.label || '';
+              const value = ctx.parsed ?? 0;
+              const total = Array.isArray(ctx.dataset?.data)
+                ? ctx.dataset.data.reduce((acc, v) => acc + (Number(v) || 0), 0)
+                : 0;
+              const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+              return `${label}: ${value} (${pct}%)`;
+            },
+          },
+        },
+      },
+    }),
+    [isDark]
+  );
+
   // Heat map data processing for Heat.js
   const heatMapData = React.useMemo(() => {
     if (!atAGlance?.heatMapData) return [];
@@ -1210,98 +1279,98 @@ const Progress = () => {
           </InsightCallout>
         )}
 
-        <AnalyticsSection labelledBy="status-totals-title">
-          <SectionHeader
-            id="status-totals"
-            eyebrow="Snapshot"
-            title="Status totals"
-            description="Counts and % of prayers on completed days in this range."
-          />
-          <AnalyticsCard className="p-5 sm:p-7 shadow-sm border-jj-border/80 dark:border-white/10">
-            <div
-              className={`grid grid-cols-2 gap-3 sm:gap-6 ${
-                masjidMode ? 'md:grid-cols-3 lg:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-4'
-              }`}
-            >
-              {(() => {
-                // Same custom colors as prayer-wise performance chart
-                const customColors = isDark ? {
-                  masjid: '#10b981',    // emerald green
-                  home: '#06b6d4',      // cyan  
-                  qaza: '#f59e0b',      // amber
-                  notPrayed: '#ef4444', // red (more distinct)
-                } : {
-                  masjid: '#059669',    // darker emerald
-                  home: '#0891b2',      // darker cyan
-                  qaza: '#d97706',      // darker amber
-                  notPrayed: '#dc2626', // darker red
-                };
+        <ChartCard
+          id="prayer-status-breakdown"
+          eyebrow="Snapshot"
+          title="Prayer Status Breakdown"
+          description=""
+          minHeightClass="min-h-[320px]"
+        >
+          {statusBreakdownData && stats.totalPrayers > 0 ? (
+            <div className="flex flex-col items-center">
+              <div className="h-[320px] w-full max-w-[420px]" role="img" aria-label="Prayer status breakdown chart">
+                <Doughnut data={statusBreakdownData} options={statusBreakdownOptions} />
+              </div>
 
-                const getStatusColor = (status) => {
-                  switch (status) {
-                    case PRAYER_STATUS.MASJID: return customColors.masjid;
-                    case PRAYER_STATUS.HOME: return customColors.home;
-                    case PRAYER_STATUS.QAZA: return customColors.qaza;
-                    case PRAYER_STATUS.NOT_PRAYED: return customColors.notPrayed;
-                    default: return customColors.home;
-                  }
-                };
+              <div className="w-full mt-5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 p-1">
+                  {(() => {
+                    // Same custom colors as prayer-wise performance chart
+                    const customColors = isDark ? {
+                      masjid: '#10b981',    // emerald green
+                      home: '#06b6d4',      // cyan  
+                      qaza: '#f59e0b',      // amber
+                      notPrayed: '#ef4444', // red (more distinct)
+                    } : {
+                      masjid: '#059669',    // darker emerald
+                      home: '#0891b2',      // darker cyan
+                      qaza: '#d97706',      // darker amber
+                      notPrayed: '#dc2626', // darker red
+                    };
 
-                // Define the order: masjid, home, qaza, not prayed
-                const statusOrder = [
-                  { key: PRAYER_STATUS.MASJID, label: 'Masjid' },
-                  { key: PRAYER_STATUS.HOME, label: 'Home' },
-                  { key: PRAYER_STATUS.QAZA, label: 'Qaza' },
-                  { key: PRAYER_STATUS.NOT_PRAYED, label: 'Not Prayed' }
-                ];
+                    const getStatusColor = (status) => {
+                      switch (status) {
+                        case PRAYER_STATUS.MASJID: return customColors.masjid;
+                        case PRAYER_STATUS.HOME: return customColors.home;
+                        case PRAYER_STATUS.QAZA: return customColors.qaza;
+                        case PRAYER_STATUS.NOT_PRAYED: return customColors.notPrayed;
+                        default: return customColors.home;
+                      }
+                    };
 
-                return masjidMode ? (
-                  // Masjid mode: show home, qaza, not prayed in round shape
-                  <>
-                    {statusOrder.filter(status => status.key !== PRAYER_STATUS.MASJID).map((status) => (
-                      <div key={status.key} className="text-center">
-                        <div className="flex items-center justify-center mb-3">
-                          <div 
-                            className="w-12 h-12 rounded-full flex items-center justify-center text-white"
-                            style={{ backgroundColor: getStatusColor(status.key) }}
-                          >
-                            {getPrayerStatusIcon(status.key)}
-                          </div>
-                        </div>
-                        <h4 className="font-semibold text-gray-800 mb-1">{status.label}</h4>
-                        <p className="text-2xl font-bold text-gray-900">{stats.prayerBreakdown[status.key]}</p>
-                        <p className="text-sm text-gray-600">{stats.totalPrayers > 0 ? ((stats.prayerBreakdown[status.key] / stats.totalPrayers) * 100).toFixed(1) : 0}%</p>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  // Standard mode: show all four in correct order with round shape
-                  <>
-                    {statusOrder.map((status) => {
-                      const count = stats.prayerBreakdown[status.key] || 0;
-                      const percentage = stats.totalPrayers > 0 ? (count / stats.totalPrayers * 100).toFixed(1) : 0;
-                      return (
-                        <div key={status.key} className="text-center">
-                          <div className="flex items-center justify-center mb-3">
-                            <div 
-                              className="w-12 h-12 rounded-full flex items-center justify-center text-white"
-                              style={{ backgroundColor: getStatusColor(status.key) }}
+                    // Define the order: masjid, home, qaza, not prayed
+                    const statusOrder = [
+                      { key: PRAYER_STATUS.MASJID, label: 'Masjid' },
+                      { key: PRAYER_STATUS.HOME, label: 'Home' },
+                      { key: PRAYER_STATUS.QAZA, label: 'Qaza' },
+                      { key: PRAYER_STATUS.NOT_PRAYED, label: 'Not Prayed' }
+                    ];
+
+                    const visibleStatuses = masjidMode
+                      ? statusOrder.filter(status => status.key !== PRAYER_STATUS.MASJID)
+                      : statusOrder;
+
+                    return (
+                      <>
+                        {visibleStatuses.map((status) => {
+                          const count = stats.prayerBreakdown[status.key] || 0;
+                          const percentage = stats.totalPrayers > 0 ? (count / stats.totalPrayers * 100).toFixed(1) : 0;
+                          return (
+                            <div
+                              key={status.key}
+                              className="flex items-center gap-3 rounded-jj-lg bg-jj-mist/55 dark:bg-white/[0.04] ring-1 ring-black/[0.04] dark:ring-white/[0.06] px-3 py-3"
                             >
-                              {getPrayerStatusIcon(status.key)}
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0"
+                                style={{ backgroundColor: getStatusColor(status.key) }}
+                              >
+                                {getPrayerStatusIcon(status.key)}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-jj-muted dark:text-stone-400 truncate">{status.label}</p>
+                                <p className="text-base font-bold text-jj-ink dark:text-stone-100 leading-tight">
+                                  {count}
+                                  <span className="text-xs font-semibold text-jj-muted dark:text-stone-500"> ({percentage}%)</span>
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <h4 className="font-semibold text-gray-800 mb-1">{status.label}</h4>
-                          <p className="text-2xl font-bold text-gray-900">{count}</p>
-                          <p className="text-sm text-gray-600">{percentage}%</p>
-                        </div>
-                      );
-                    })}
-                  </>
-                );
-              })()}
+                          );
+                        })}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
-          </AnalyticsCard>
-        </AnalyticsSection>
+          ) : (
+            <EmptyStateCard
+              className="border-0 shadow-none bg-transparent py-8"
+              icon={Calendar}
+              title="No prayer data"
+              body="Log prayers in this range to see the status breakdown chart."
+            />
+          )}
+        </ChartCard>
 
         <ChartCard
           id="prayer-wise-performance"
@@ -1431,7 +1500,7 @@ const Progress = () => {
                 </button>
                 <button
                   type="button"
-                  className={`min-h-10 px-3 rounded-jj text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent transition-colors ${
+                  className={`ml-auto min-h-10 px-3 rounded-jj text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent transition-colors ${
                     zoomReady
                       ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-200 shadow-sm dark:shadow-none'
                       : 'text-stone-400 cursor-not-allowed'
