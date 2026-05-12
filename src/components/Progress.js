@@ -9,7 +9,7 @@ import {
 } from '../lib/chartTheme';
 import { ensureChartsRegistered, ChartJS } from '../lib/registerCharts';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import {
   Calendar,
@@ -479,6 +479,7 @@ const Progress = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [masjidMode, setMasjidMode] = useState(false);
+  const [countUpEnabled, setCountUpEnabled] = useState(true);
   const [trendType, setTrendType] = useState(() => {
     return localStorage.getItem('progress_trend_type') || 'average';
   }); // 'average' | 'composite'
@@ -511,24 +512,42 @@ const Progress = () => {
     }
   }, [currentUser]);
 
-  // Fetch user's Masjid Mode setting
+  // Fetch user settings
   useEffect(() => {
-    const fetchMasjidMode = async () => {
+    const fetchSettings = async () => {
       if (currentUser) {
         try {
           const userDocRef = doc(db, 'users', currentUser.uid);
           const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
-            setMasjidMode(userDoc.data().masjidMode || false);
+            const data = userDoc.data();
+            setMasjidMode(data.masjidMode || false);
+            setCountUpEnabled(data.countUpEnabled !== false);
           }
         } catch (error) {
-          console.error('Error fetching masjid mode:', error);
+          console.error('Error fetching user settings:', error);
           setMasjidMode(false);
+          setCountUpEnabled(true);
         }
       }
     };
-    fetchMasjidMode();
+    fetchSettings();
   }, [currentUser]);
+
+  const handleCountUpToggle = async () => {
+    try {
+      const newEnabled = !countUpEnabled;
+      setCountUpEnabled(newEnabled);
+      if (currentUser) {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        await updateDoc(userDocRef, {
+          countUpEnabled: newEnabled
+        });
+      }
+    } catch (error) {
+      console.error('Error updating count-up setting:', error);
+    }
+  };
 
   useEffect(() => {
     if (currentUser) {
@@ -1351,15 +1370,31 @@ const Progress = () => {
           minHeightClass="min-h-[320px]"
         >
           {statusBreakdownData && stats.totalPrayers > 0 ? (
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center relative w-full">
+              {/* Animation Toggle - Positioned top right of the card content area */}
+              <button
+                type="button"
+                onClick={handleCountUpToggle}
+                className={`absolute -top-1 right-0 sm:right-1 flex items-center justify-center w-8 h-8 rounded-full transition-all duration-jj focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent z-20 ${
+                  countUpEnabled 
+                    ? 'bg-jj-accent/10 text-jj-accent dark:text-teal-300 ring-1 ring-jj-accent/20 shadow-sm' 
+                    : 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 ring-1 ring-red-200 dark:ring-red-900/50 shadow-sm'
+                }`}
+                title={countUpEnabled ? 'Disable count-up animation' : 'Enable count-up animation'}
+              >
+                <Zap className={`w-3.5 h-3.5 ${countUpEnabled ? 'fill-current' : ''}`} />
+              </button>
+
               <div className="h-[320px] w-full max-w-[420px] relative flex items-center justify-center" role="img" aria-label="Prayer status breakdown chart">
                 <Doughnut data={statusBreakdownData} options={statusBreakdownOptions} />
+
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <div className="flex items-baseline gap-0.5 leading-none">
                     <CountUp
                       to={Number((stats.averageScore ?? 0).toFixed(1))}
                       from={0}
                       duration={1.5}
+                      enabled={countUpEnabled}
                       className="text-4xl font-black text-jj-ink dark:text-stone-100"
                     />
                   </div>

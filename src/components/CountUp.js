@@ -11,20 +11,10 @@ export default function CountUp({
   startWhen = true,
   separator = '',
   onStart,
-  onEnd
+  onEnd,
+  enabled = true
 }) {
   const ref = useRef(null);
-  const motionValue = useMotionValue(direction === 'down' ? to : from);
-
-  const damping = 20 + 40 * (1 / duration);
-  const stiffness = 100 * (1 / duration);
-
-  const springValue = useSpring(motionValue, {
-    damping,
-    stiffness
-  });
-
-  const isInView = useInView(ref, { once: true, margin: '0px' });
 
   const getDecimalPlaces = num => {
     const str = num.toString();
@@ -59,14 +49,31 @@ export default function CountUp({
     [maxDecimals, separator]
   );
 
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.textContent = formatValue(direction === 'down' ? to : from);
-    }
-  }, [from, to, direction, formatValue]);
+  const motionValue = useMotionValue(direction === 'down' ? to : from);
+
+  const damping = 20 + 40 * (1 / duration);
+  const stiffness = 100 * (1 / duration);
+
+  const springValue = useSpring(motionValue, {
+    damping,
+    stiffness
+  });
+
+  const isInView = useInView(ref, { once: true, margin: '0px' });
 
   useEffect(() => {
-    if (isInView && startWhen) {
+    if (ref.current) {
+      if (!enabled) {
+        ref.current.textContent = formatValue(to);
+      } else {
+        ref.current.textContent = formatValue(direction === 'down' ? to : from);
+        motionValue.set(direction === 'down' ? to : from);
+      }
+    }
+  }, [from, to, direction, formatValue, enabled, motionValue]);
+
+  useEffect(() => {
+    if (enabled && isInView && startWhen) {
       if (typeof onStart === 'function') onStart();
 
       const timeoutId = setTimeout(() => {
@@ -84,10 +91,16 @@ export default function CountUp({
         clearTimeout(timeoutId);
         clearTimeout(durationTimeoutId);
       };
+    } else if (!enabled && startWhen) {
+      // If disabled, just trigger onStart/onEnd immediately if needed
+      if (typeof onStart === 'function') onStart();
+      if (typeof onEnd === 'function') onEnd();
     }
-  }, [isInView, startWhen, motionValue, direction, from, to, delay, onStart, onEnd, duration]);
+  }, [isInView, startWhen, motionValue, direction, from, to, delay, onStart, onEnd, duration, enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
+    
     const unsubscribe = springValue.on('change', latest => {
       if (ref.current) {
         ref.current.textContent = formatValue(latest);
@@ -95,7 +108,7 @@ export default function CountUp({
     });
 
     return () => unsubscribe();
-  }, [springValue, formatValue]);
+  }, [springValue, formatValue, enabled]);
 
   return <span className={className} ref={ref} />;
 }
