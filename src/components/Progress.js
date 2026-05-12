@@ -35,12 +35,10 @@ import { PRAYER_STATUS, PRAYER_TYPES, PRAYER_SCORES, SURAH_ALKAHF, SURAH_STATUS,
 import { useTheme } from '../contexts/ThemeContext';
 import {
   AnalyticsCard,
-  AnalyticsSection,
   ChartCard,
   EmptyStateCard,
   InsightCallout,
   KPIStatCard,
-  SectionHeader,
 } from './analytics';
 import {
   buildLastNDaysSlotCompletionSeries,
@@ -885,7 +883,7 @@ const Progress = () => {
         },
       },
     }),
-    [isDark]
+    []
   );
 
   // Heat map data processing for Heat.js
