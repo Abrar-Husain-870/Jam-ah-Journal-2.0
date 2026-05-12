@@ -214,36 +214,26 @@
 
 
 
-.react-calendar__tile--active:not(.tile-today) {
-
+.react-calendar__tile--active:not(.tile-today):not(.tile-outline) {
   background: transparent !important;
-
 }
 
 
 
 .tile-outline {
-
-  border-color: rgba(13, 109, 99, 0.55) !important;
-
+  border-color: rgba(13, 109, 99, 0.8) !important;
   border-style: solid !important;
-
-  background: rgba(13, 109, 99, 0.04) !important;
-
-  box-shadow: 0 0 0 1px rgba(13, 109, 99, 0.08);
-
+  border-width: 2px !important;
+  background: rgba(13, 109, 99, 0.12) !important;
+  box-shadow: 0 0 0 1px rgba(13, 109, 99, 0.1);
 }
 
 
 
 .dark .tile-outline {
-
-  border-color: rgba(45, 212, 191, 0.45) !important;
-
-  background: rgba(45, 212, 191, 0.06) !important;
-
-  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.06);
-
+  border-color: rgba(45, 212, 191, 0.6) !important;
+  background: rgba(45, 212, 191, 0.1) !important;
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.12);
 }
 
 
