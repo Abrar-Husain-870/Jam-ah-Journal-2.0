@@ -20,6 +20,7 @@ import {
   Zap,
   Trophy,
   BarChart3,
+  ChevronDown
 } from 'lucide-react';
 import { MosqueIcon } from './icons/MosqueIcon';
 import {
@@ -1164,40 +1165,46 @@ const Progress = () => {
           <div className="flex flex-wrap gap-2 items-center">
             {timeframe === 'month' && (
               <>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => {
-                    const month = parseInt(e.target.value, 10);
-                    setSelectedMonth(month);
-                    if (currentUser) {
-                      localStorage.setItem(`progress_month_${currentUser.uid}`, month.toString());
-                    }
-                  }}
-                  className="text-sm rounded-jj min-h-11 border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark px-3.5 py-2 text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
-                >
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      {new Date(2024, i).toLocaleDateString('en-US', { month: 'long' })}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => {
-                    const year = parseInt(e.target.value, 10);
-                    setSelectedYear(year);
-                    if (currentUser) {
-                      localStorage.setItem(`progress_year_${currentUser.uid}`, year.toString());
-                    }
-                  }}
-                  className="text-sm rounded-jj min-h-11 border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark px-3.5 py-2 text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
-                >
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <option key={2024 + i} value={2024 + i}>
-                      {2024 + i}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => {
+                      const month = parseInt(e.target.value, 10);
+                      setSelectedMonth(month);
+                      if (currentUser) {
+                        localStorage.setItem(`progress_month_${currentUser.uid}`, month.toString());
+                      }
+                    }}
+                    className="text-sm rounded-jj min-h-11 border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark pl-3.5 pr-10 py-2 text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent appearance-none cursor-pointer"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        {new Date(2024, i).toLocaleDateString('en-US', { month: 'long' })}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-jj-muted dark:text-stone-500 pointer-events-none" strokeWidth={2} />
+                </div>
+                <div className="relative">
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => {
+                      const year = parseInt(e.target.value, 10);
+                      setSelectedYear(year);
+                      if (currentUser) {
+                        localStorage.setItem(`progress_year_${currentUser.uid}`, year.toString());
+                      }
+                    }}
+                    className="text-sm rounded-jj min-h-11 border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark pl-3.5 pr-10 py-2 text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent appearance-none cursor-pointer"
+                  >
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <option key={2024 + i} value={2024 + i}>
+                        {2024 + i}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-jj-muted dark:text-stone-500 pointer-events-none" strokeWidth={2} />
+                </div>
               </>
             )}
 

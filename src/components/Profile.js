@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   User, 
@@ -14,7 +14,9 @@ import {
   Eye,
   EyeOff,
   Building,
-  Lock
+  Lock,
+  Globe,
+  ChevronDown
 } from 'lucide-react';
 import RefreshAppButton from './RefreshAppButton';
 import { 
@@ -32,6 +34,7 @@ import { getYearlyStats, getAllTimeStats } from '../services/analyticsService';
 import { useOnlineStatus } from '../contexts/OnlineStatusContext';
 import { useModalDismiss } from '../hooks/useModalDismiss';
 import { isAdminUser } from '../utils/adminAccess';
+import { COUNTRIES, getFlagEmoji, getFlagUrl } from '../utils/countries';
 
 const Profile = () => {
   const { currentUser, logout, getUserNickname, refreshNickname, userNickname: contextNickname } = useAuth();
@@ -48,6 +51,10 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [isPrivacyEnabled, setIsPrivacyEnabled] = useState(false);
   const [isMasjidModeEnabled, setIsMasjidModeEnabled] = useState(false);
+  const [userCountry, setUserCountry] = useState('');
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const countryDropdownRef = useRef(null);
 // --- Admin Delete User Modal State ---
 const [adminUserList, setAdminUserList] = useState([]);
 const [showAdminDeleteModal, setShowAdminDeleteModal] = useState(false);
@@ -62,6 +69,18 @@ const [userToDelete, setUserToDelete] = useState(null);
     else if (showClearDataModal) setShowClearDataModal(false);
     else if (showDeleteConfirm) setShowDeleteConfirm(false);
   });
+
+  // Close country dropdown on outside click
+  useEffect(() => {
+    if (!countryDropdownOpen) return;
+    const handler = (e) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target)) {
+        setCountryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [countryDropdownOpen]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -78,6 +97,7 @@ const [userToDelete, setUserToDelete] = useState(null);
             const userData = userDoc.data();
             setIsPrivacyEnabled(userData.isPrivate || false);
             setIsMasjidModeEnabled(userData.masjidMode || false);
+            setUserCountry(userData.country || '');
           } else {
             // For new users, set default values
             await updateDoc(userDocRef, {
@@ -176,6 +196,23 @@ const [userToDelete, setUserToDelete] = useState(null);
     } catch (error) {
       console.error('Error updating masjid mode setting:', error);
       alert('Failed to update masjid mode setting. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCountryUpdate = async (countryCode) => {
+    if (!online) return;
+    try {
+      setLoading(true);
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userDocRef, {
+        country: countryCode
+      });
+      setUserCountry(countryCode);
+    } catch (error) {
+      console.error('Error updating country:', error);
+      alert('Failed to update country. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -362,6 +399,97 @@ const [userToDelete, setUserToDelete] = useState(null);
               <p className="text-base sm:text-lg text-jj-ink dark:text-stone-100 break-all">{currentUser.email}</p>
             </div>
           </div>
+ 
+          {/* Country */}
+          <div className="relative" ref={countryDropdownRef}>
+            <label className="block text-sm font-medium text-jj-muted dark:text-stone-400 mb-1.5 flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5" strokeWidth={1.75} /> Country
+            </label>
+            <div className="relative">
+              {/* Trigger button */}
+              <button
+                type="button"
+                onClick={() => { if (!loading && online) { setCountryDropdownOpen(v => !v); setCountrySearch(''); } }}
+                disabled={loading || !online}
+                className="w-full min-h-11 flex items-center justify-between px-3.5 py-2.5 rounded-jj border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent disabled:opacity-60 cursor-pointer hover:border-jj-accent/30 transition-colors text-left"
+                title={!online ? 'Offline: view-only' : 'Select your country'}
+              >
+                <span className="flex items-center gap-2">
+                  {userCountry ? (
+                    <>
+                      <img 
+                        src={getFlagUrl(userCountry)} 
+                        alt="" 
+                        className="w-5 h-3.5 object-cover rounded-sm shadow-sm"
+                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'inline'; }}
+                      />
+                      <span className="hidden leading-none text-lg">{getFlagEmoji(userCountry)}</span>
+                      <span>{COUNTRIES.find(c => c.code === userCountry)?.name || userCountry}</span>
+                    </>
+                  ) : (
+                    <span className="text-jj-muted dark:text-stone-500">Not set</span>
+                  )}
+                </span>
+                <Edit2 className="w-3.5 h-3.5 text-jj-muted dark:text-stone-500 shrink-0" />
+              </button>
+
+              {/* Dropdown panel */}
+              {countryDropdownOpen && (
+                <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-jj-surface dark:bg-jj-canvas-dark border border-jj-border dark:border-white/12 rounded-jj shadow-xl overflow-hidden">
+                  {/* Search input */}
+                  <div className="p-2 border-b border-jj-border dark:border-white/10">
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Search country..."
+                      value={countrySearch}
+                      onChange={e => setCountrySearch(e.target.value)}
+                      className="w-full px-3 py-2 text-sm rounded-jj bg-jj-mist dark:bg-white/[0.05] text-jj-ink dark:text-stone-100 border-none outline-none focus:ring-2 focus:ring-jj-accent"
+                    />
+                  </div>
+                  {/* Options list */}
+                  <div className="max-h-56 overflow-y-auto">
+                    <button
+                      type="button"
+                      onClick={() => { handleCountryUpdate(''); setCountryDropdownOpen(false); }}
+                      className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center gap-3 hover:bg-jj-mist dark:hover:bg-white/[0.06] transition-colors ${
+                        !userCountry ? 'bg-jj-accent/10 text-jj-accent dark:text-teal-300 font-medium' : 'text-jj-muted dark:text-stone-400'
+                      }`}
+                    >
+                      Not set
+                    </button>
+                    {COUNTRIES
+                      .filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase()))
+                      .map(c => (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => { handleCountryUpdate(c.code); setCountryDropdownOpen(false); }}
+                          className={`w-full text-left px-3.5 py-2.5 text-sm flex items-center gap-3 hover:bg-jj-mist dark:hover:bg-white/[0.06] transition-colors ${
+                            userCountry === c.code ? 'bg-jj-accent/10 text-jj-accent dark:text-teal-300 font-medium' : 'text-jj-ink dark:text-stone-100'
+                          }`}
+                        >
+                          <div className="w-7 flex justify-center">
+                            <img 
+                              src={getFlagUrl(c.code)} 
+                              alt="" 
+                              className="w-5 h-3.5 object-cover rounded-sm shadow-sm"
+                              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'inline'; }}
+                            />
+                            <span className="hidden leading-none text-lg">{getFlagEmoji(c.code)}</span>
+                          </div>
+                          <span>{c.name}</span>
+                        </button>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] sm:text-xs text-jj-muted dark:text-stone-500 mt-1.5">
+              Setting your country will display your flag on the leaderboards.
+            </p>
+          </div>
 
           {/* Total Days Tracked */}
           <div>
@@ -540,21 +668,47 @@ const [userToDelete, setUserToDelete] = useState(null);
               <div className="mb-4 space-y-2">
                 <label className="block text-sm font-medium text-gray-600">Select Month & Year</label>
                 <div className="flex gap-2">
-                  <select
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {new Date(2000, i).toLocaleString('default', { month: 'long' })}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative flex-1">
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                      className="w-full pl-3 pr-9 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-jj-surface dark:bg-jj-canvas-dark text-jj-ink dark:text-stone-100 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-jj-accent"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          {new Date(2000, i).toLocaleString('default', { month: 'long' })}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-jj-muted dark:text-stone-500 pointer-events-none" />
+                  </div>
+                  <div className="relative flex-1">
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                      className="w-full pl-3 pr-9 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-jj-surface dark:bg-jj-canvas-dark text-jj-ink dark:text-stone-100 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-jj-accent"
+                    >
+                      {Array.from({ length: 5 }, (_, i) => {
+                        const year = new Date().getFullYear() - 2 + i;
+                        return (
+                          <option key={year} value={year}>{year}</option>
+                        );
+                      })}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-jj-muted dark:text-stone-500 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {clearDataType === 'year' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-600 mb-2">Select Year</label>
+                <div className="relative">
                   <select
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                    className="w-full pl-3 pr-9 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-jj-surface dark:bg-jj-canvas-dark text-jj-ink dark:text-stone-100 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-jj-accent"
                   >
                     {Array.from({ length: 5 }, (_, i) => {
                       const year = new Date().getFullYear() - 2 + i;
@@ -563,25 +717,8 @@ const [userToDelete, setUserToDelete] = useState(null);
                       );
                     })}
                   </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-jj-muted dark:text-stone-500 pointer-events-none" />
                 </div>
-              </div>
-            )}
-            
-            {clearDataType === 'year' && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-600 mb-2">Select Year</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                >
-                  {Array.from({ length: 5 }, (_, i) => {
-                    const year = new Date().getFullYear() - 2 + i;
-                    return (
-                      <option key={year} value={year}>{year}</option>
-                    );
-                  })}
-                </select>
               </div>
             )}
             

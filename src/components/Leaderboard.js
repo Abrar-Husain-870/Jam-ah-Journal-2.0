@@ -7,7 +7,6 @@ import {
   Medal, 
   Award, 
   Users, 
-  Globe, 
   UserPlus,
   Search,
   Crown,
@@ -21,8 +20,11 @@ import {
   Minus,
   X,
   Lock,
-  Clock
+  Clock,
+  Globe,
+  ChevronDown
 } from 'lucide-react';
+import { getFlagEmoji, getCountryName, getFlagUrl } from '../utils/countries';
 import { 
   collection, 
   getDocs, 
@@ -559,6 +561,7 @@ const Leaderboard = () => {
             email: userData.email,
             isPrivate: userData.isPrivate || false,
             masjidMode: userData.masjidMode || false,
+            country: userData.country || '',
             ...stats
           };
         })
@@ -757,6 +760,7 @@ const Leaderboard = () => {
                 return {
                   id: friendDoc.id,
                   nickname: friendData.nickname,
+                  country: friendData.country || '',
                   averageScore: stats.averageScore,
                   totalDays: stats.totalDays,
                   totalScore: stats.totalScore,
@@ -918,7 +922,8 @@ const Leaderboard = () => {
             id: doc.id,
             nickname: userData.nickname,
             email: userData.email,
-            displayName: userData.displayName
+            displayName: userData.displayName,
+            country: userData.country || ''
           });
         }
       });
@@ -1286,7 +1291,20 @@ const Leaderboard = () => {
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {getProfileIcon(requesterData.nickname)}
             <div className="min-w-0 flex-1">
-              <h4 className="font-semibold text-gray-800 truncate">{requesterData.nickname}</h4>
+              <h4 className="font-semibold text-gray-800 truncate flex items-center gap-1.5">
+                <span className="truncate">{requesterData.nickname}</span>
+                {requesterData.country && (
+                  <span className="inline-flex items-center" title={getCountryName(requesterData.country)}>
+                    <img 
+                      src={getFlagUrl(requesterData.country)} 
+                      alt="" 
+                      className="w-[16px] h-[11px] object-cover rounded-sm shadow-sm"
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'inline'; }}
+                    />
+                    <span className="hidden leading-none text-sm">{getFlagEmoji(requesterData.country)}</span>
+                  </span>
+                )}
+              </h4>
               <p className="text-xs text-gray-400">Wants to be your friend</p>
             </div>
           </div>
@@ -1355,7 +1373,20 @@ const Leaderboard = () => {
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {getProfileIcon(userData.nickname)}
             <div className="min-w-0 flex-1">
-              <h4 className="font-semibold text-gray-800 truncate">{userData.nickname}</h4>
+              <h4 className="font-semibold text-gray-800 truncate flex items-center gap-1.5">
+                <span className="truncate">{userData.nickname}</span>
+                {userData.country && (
+                  <span className="inline-flex items-center" title={getCountryName(userData.country)}>
+                    <img 
+                      src={getFlagUrl(userData.country)} 
+                      alt="" 
+                      className="w-[16px] h-[11px] object-cover rounded-sm shadow-sm"
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'inline'; }}
+                    />
+                    <span className="hidden leading-none text-sm">{getFlagEmoji(userData.country)}</span>
+                  </span>
+                )}
+              </h4>
               <p className="text-xs text-gray-400">Request pending...</p>
             </div>
           </div>
@@ -1403,10 +1434,21 @@ const Leaderboard = () => {
           {getProfileIcon(user.nickname)}
           <div>
             <div className="flex items-center gap-2">
-              <h3 className={`text-base font-semibold ${nameClass}`}>
-                {user.nickname}
+              <h3 className={`text-base font-semibold ${nameClass} flex items-center gap-1.5`}>
+                <span>{user.nickname}</span>
+                {user.country && (
+                  <span className="inline-flex items-center" title={getCountryName(user.country)}>
+                    <img 
+                      src={getFlagUrl(user.country)} 
+                      alt="" 
+                      className="w-[18px] h-[13px] object-cover rounded-sm shadow-sm"
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'inline'; }}
+                    />
+                    <span className="hidden leading-none text-sm">{getFlagEmoji(user.country)}</span>
+                  </span>
+                )}
                 {isCurrentUser && (
-                  <span className="text-jj-muted dark:text-stone-400 font-medium ml-2 text-sm">(You)</span>
+                  <span className="text-jj-muted dark:text-stone-400 font-medium text-sm">(You)</span>
                 )}
               </h3>
               {user.trend && getTrendIcon(user.trend)}
@@ -1436,10 +1478,21 @@ const Leaderboard = () => {
           {getProfileIcon(user.nickname)}
           <div>
             <div className="flex items-center gap-1">
-              <h3 className={`text-sm font-semibold ${nameClass}`}>
-                {user.nickname}
+              <h3 className={`text-sm font-semibold ${nameClass} flex items-center gap-1.5`}>
+                <span>{user.nickname}</span>
+                {user.country && (
+                  <span className="inline-flex items-center" title={getCountryName(user.country)}>
+                    <img 
+                      src={getFlagUrl(user.country)} 
+                      alt="" 
+                      className="w-[16px] h-[11px] object-cover rounded-sm shadow-sm"
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'inline'; }}
+                    />
+                    <span className="hidden leading-none text-xs">{getFlagEmoji(user.country)}</span>
+                  </span>
+                )}
                 {isCurrentUser && (
-                  <span className="text-jj-muted dark:text-stone-400 font-medium ml-1 text-xs">(You)</span>
+                  <span className="text-jj-muted dark:text-stone-400 font-medium text-xs">(You)</span>
                 )}
               </h3>
               {user.trend && getTrendIcon(user.trend)}
@@ -1708,43 +1761,49 @@ const Leaderboard = () => {
           {/* Filters Row */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 items-stretch sm:items-center w-full">
             {/* Time Period Filter */}
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-none">
               <Calendar className="w-4 h-4 text-jj-muted dark:text-stone-500 shrink-0" strokeWidth={1.75} />
-              <select
-                value={timePeriod}
-                onChange={(e) => {
-                  setTimePeriod(e.target.value);
-                  if (currentUser) {
-                    localStorage.setItem(`leaderboard_timePeriod_${currentUser.uid}`, e.target.value);
-                  }
-                }}
-                className="min-h-11 flex-1 sm:flex-none rounded-jj border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark px-3.5 py-2 text-sm text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
-              >
-                <option value="all">All Time</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="year">This Year</option>
-              </select>
+              <div className="relative flex-1">
+                <select
+                  value={timePeriod}
+                  onChange={(e) => {
+                    setTimePeriod(e.target.value);
+                    if (currentUser) {
+                      localStorage.setItem(`leaderboard_timePeriod_${currentUser.uid}`, e.target.value);
+                    }
+                  }}
+                  className="w-full min-h-11 rounded-jj border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark pl-3.5 pr-10 py-2 text-sm text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent appearance-none cursor-pointer"
+                >
+                  <option value="all">All Time</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                  <option value="year">This Year</option>
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-jj-muted dark:text-stone-500 pointer-events-none" strokeWidth={2} />
+              </div>
             </div>
             
             {/* Masjid Mode Filter - Only show for Global tab */}
             {activeTab === 'global' && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 sm:flex-1">
                 <span className="text-sm font-medium text-jj-muted dark:text-stone-400 shrink-0">Prayer mode</span>
-                <select
-                  value={masjidModeFilter}
-                  onChange={(e) => {
-                    setMasjidModeFilter(e.target.value);
-                    if (currentUser) {
-                      localStorage.setItem(`leaderboard_masjidModeFilter_${currentUser.uid}`, e.target.value);
-                    }
-                  }}
-                  className="min-h-11 flex-1 rounded-jj border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark px-3.5 py-2 text-sm text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent"
-                >
-                  <option value="all">All Users</option>
-                  <option value="off">Standard Mode</option>
-                  <option value="on">Home Prayer Mode</option>
-                </select>
+                <div className="relative flex-1">
+                  <select
+                    value={masjidModeFilter}
+                    onChange={(e) => {
+                      setMasjidModeFilter(e.target.value);
+                      if (currentUser) {
+                        localStorage.setItem(`leaderboard_masjidModeFilter_${currentUser.uid}`, e.target.value);
+                      }
+                    }}
+                    className="w-full min-h-11 rounded-jj border border-jj-border dark:border-white/12 bg-jj-surface dark:bg-jj-canvas-dark pl-3.5 pr-10 py-2 text-sm text-jj-ink dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent appearance-none cursor-pointer"
+                  >
+                    <option value="all">All Users</option>
+                    <option value="off">Standard Mode</option>
+                    <option value="on">Home Prayer Mode</option>
+                  </select>
+                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-jj-muted dark:text-stone-500 pointer-events-none" strokeWidth={2} />
+                </div>
               </div>
             )}
           </div>
@@ -1804,7 +1863,20 @@ const Leaderboard = () => {
                             <div className="flex items-center gap-3">
                               {getProfileIcon(user.nickname)}
                               <div>
-                                <h5 className="font-semibold text-gray-800">{user.nickname}</h5>
+                                <h5 className="font-semibold text-gray-800 flex items-center gap-1.5">
+                                  <span>{user.nickname}</span>
+                                  {user.country && (
+                                    <span className="inline-flex items-center" title={getCountryName(user.country)}>
+                                      <img 
+                                        src={getFlagUrl(user.country)} 
+                                        alt="" 
+                                        className="w-[16px] h-[11px] object-cover rounded-sm shadow-sm"
+                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'inline'; }}
+                                      />
+                                      <span className="hidden leading-none text-sm">{getFlagEmoji(user.country)}</span>
+                                    </span>
+                                  )}
+                                </h5>
                                 <p className="text-sm text-gray-500">{user.email}</p>
                                 {user.displayName && user.displayName !== user.nickname && (
                                   <p className="text-xs text-gray-400">({user.displayName})</p>
@@ -1958,7 +2030,20 @@ const Leaderboard = () => {
                             <div className="flex-shrink-0">{getProfileIcon(friend.nickname)}</div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-jj-ink dark:text-stone-100 truncate">{friend.nickname}</h3>
+                                <h3 className="font-semibold text-jj-ink dark:text-stone-100 truncate flex items-center gap-1.5">
+                                  <span className="truncate">{friend.nickname}</span>
+                                  {friend.country && (
+                                    <span className="inline-flex items-center" title={getCountryName(friend.country)}>
+                                      <img 
+                                        src={getFlagUrl(friend.country)} 
+                                        alt="" 
+                                        className="w-[16px] h-[11px] object-cover rounded-sm shadow-sm"
+                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'inline'; }}
+                                      />
+                                      <span className="hidden leading-none text-sm">{getFlagEmoji(friend.country)}</span>
+                                    </span>
+                                  )}
+                                </h3>
                                 {friend.trend && getTrendIcon(friend.trend)}
                               </div>
                               <p className="text-sm text-jj-muted dark:text-stone-500">{friend.totalDays} days tracked</p>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Calendar from 'react-calendar';
-import { ChevronLeft, ChevronRight, Home, Clock, X, Book, Lock, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Home, Clock, X, Book, Lock, Loader2 } from 'lucide-react';
 import { MosqueIcon } from './icons/MosqueIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc, collection, query as fsQuery, where, orderBy, onSnapshot } from 'firebase/firestore';
@@ -432,28 +432,29 @@ const PrayerCalendar = () => {
                   <span title="Offline: view-only" className="text-gray-400 dark:text-gray-500">
                     <Lock className="w-3.5 h-3.5" />
                   </span>
-                )}
-
-                <select
-                  value={(selectedDayData && selectedDayData[SURAH_ALKAHF]) || ""}
-                  onChange={(e) => handlePrayerStatusChange(SURAH_ALKAHF, e.target.value)}
-                  disabled={!online}
-                  className={`text-sm rounded-jj min-h-11 px-3 py-2 min-w-[8.5rem] sm:min-w-[9.5rem] focus:outline-none focus-visible:ring-2 bg-jj-surface dark:bg-jj-surface-dark-2 text-jj-ink dark:text-stone-100 font-medium ${
-                    !online
-                      ? 'border border-stone-200 dark:border-white/10 opacity-55 cursor-not-allowed'
-                      : 'border border-violet-300/55 dark:border-violet-500/25 focus-visible:ring-violet-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-elevated-dark'
-                  }`}
-                >
-                  {(selectedDayData && selectedDayData[SURAH_ALKAHF]) ? (
-                    <option value="clear">Clear</option>
-                  ) : (
-                    <option value="" disabled>
-                      -- Select --
-                    </option>
-                  )}
-                  <option value={SURAH_STATUS.RECITED}>Recited</option>
-                  <option value={SURAH_STATUS.MISSED}>Missed</option>
-                </select>
+                )}                <div className="relative">
+                  <select
+                    value={(selectedDayData && selectedDayData[SURAH_ALKAHF]) || ""}
+                    onChange={(e) => handlePrayerStatusChange(SURAH_ALKAHF, e.target.value)}
+                    disabled={!online}
+                    className={`text-sm rounded-jj min-h-11 pl-3 pr-10 py-2 min-w-[8.5rem] sm:min-w-[9.5rem] focus:outline-none focus-visible:ring-2 bg-jj-surface dark:bg-jj-surface-dark-2 text-jj-ink dark:text-stone-100 font-medium appearance-none cursor-pointer ${
+                      !online
+                        ? 'border border-stone-200 dark:border-white/10 opacity-55 cursor-not-allowed'
+                        : 'border border-violet-300/55 dark:border-violet-500/25 focus-visible:ring-violet-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-elevated-dark'
+                    }`}
+                  >
+                    {(selectedDayData && selectedDayData[SURAH_ALKAHF]) ? (
+                      <option value="clear">Clear</option>
+                    ) : (
+                      <option value="" disabled>
+                        -- Select --
+                      </option>
+                    )}
+                    <option value={SURAH_STATUS.RECITED}>Recited</option>
+                    <option value={SURAH_STATUS.MISSED}>Missed</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-jj-muted dark:text-stone-500 pointer-events-none" strokeWidth={2} />
+                </div>
               </div>
             </div>
           )}
