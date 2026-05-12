@@ -42,6 +42,7 @@ import {
   SURAH_SCORES,
   getPrayerScores 
 } from '../services/prayerService';
+import CountUp from './CountUp';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   AnalyticsCard,
@@ -1351,8 +1352,19 @@ const Progress = () => {
         >
           {statusBreakdownData && stats.totalPrayers > 0 ? (
             <div className="flex flex-col items-center">
-              <div className="h-[320px] w-full max-w-[420px]" role="img" aria-label="Prayer status breakdown chart">
+              <div className="h-[320px] w-full max-w-[420px] relative flex items-center justify-center" role="img" aria-label="Prayer status breakdown chart">
                 <Doughnut data={statusBreakdownData} options={statusBreakdownOptions} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="flex items-baseline gap-0.5 leading-none">
+                    <CountUp
+                      to={Number((stats.averageScore ?? 0).toFixed(1))}
+                      from={0}
+                      duration={1.5}
+                      className="text-4xl font-black text-jj-ink dark:text-stone-100"
+                    />
+                  </div>
+                  <span className="text-[10px] font-bold text-jj-muted dark:text-stone-500 uppercase tracking-widest mt-1">Avg Score</span>
+                </div>
               </div>
 
               <div className="w-full mt-5">
