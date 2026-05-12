@@ -16,7 +16,9 @@ import {
   ChevronRight,
   Info,
   Star,
-  Zap
+  Zap,
+  Mail,
+  Linkedin
 } from 'lucide-react';
 import { MosqueIcon } from './icons/MosqueIcon';
 
@@ -434,6 +436,66 @@ const Rules = () => {
                     <li>• Days Tracked (15%) — timeframe-aware cap (Week 7, 30D 30, Month days-in-month, Year 60, All 60)</li>
                   </ul>
                 </div>
+              </div>
+            </div>
+          </SectionCard>
+          
+          {/* Contact Us */}
+          <SectionCard
+            id="contact"
+            title="Contact Us"
+            icon={Mail}
+            isExpanded={expandedSection === 'contact'}
+          >
+            <div className="space-y-6">
+              <p className="text-jj-ink/90 dark:text-stone-300">
+                Have questions, feedback, or need assistance? Reach out to the developer.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-jj-lg p-5 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-jj-accent/10 dark:bg-teal-400/10 flex items-center justify-center">
+                      <Mail className="w-5 h-5 text-jj-accent dark:text-teal-300" strokeWidth={1.75} />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-jj-ink dark:text-stone-100">Email</h4>
+                      <p className="text-xs text-jj-muted dark:text-stone-500">Direct inquiries</p>
+                    </div>
+                  </div>
+                  <a 
+                    href="mailto:husainabrar870@gmail.com"
+                    className="text-sm font-medium text-jj-accent dark:text-teal-300 hover:underline break-all"
+                  >
+                    husainabrar870@gmail.com
+                  </a>
+                </div>
+
+                <div className="rounded-jj-lg p-5 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-jj-accent/10 dark:bg-teal-400/10 flex items-center justify-center">
+                      <Linkedin className="w-5 h-5 text-jj-accent dark:text-teal-300" strokeWidth={1.75} />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-jj-ink dark:text-stone-100">LinkedIn</h4>
+                      <p className="text-xs text-jj-muted dark:text-stone-500">Professional profile</p>
+                    </div>
+                  </div>
+                  <a 
+                    href="https://www.linkedin.com/in/syed-abrar-husain-8833072b7/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-jj-accent dark:text-teal-300 hover:underline break-all"
+                  >
+                    Syed Abrar Husain
+                  </a>
+                </div>
+              </div>
+
+              <div className="rounded-jj-xl p-5 border border-jj-border/80 dark:border-white/[0.08] bg-jj-mist/30 dark:bg-white/[0.03] text-center">
+                <p className="text-sm text-jj-muted dark:text-stone-400">
+                  Developed with ❤️ by <span className="font-semibold text-jj-ink dark:text-stone-200">Syed Abrar Husain</span>
+                </p>
               </div>
             </div>
           </SectionCard>
