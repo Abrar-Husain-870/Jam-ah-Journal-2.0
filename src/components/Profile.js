@@ -30,7 +30,7 @@ import {
 } from 'firebase/firestore';
 import { deleteUser } from 'firebase/auth';
 import { db } from '../firebase/config';
-import { getYearlyStats, getAllTimeStats } from '../services/analyticsService';
+import { getAllTimeStats } from '../services/analyticsService';
 import { useOnlineStatus } from '../contexts/OnlineStatusContext';
 import { useModalDismiss } from '../hooks/useModalDismiss';
 import { isAdminUser } from '../utils/adminAccess';
