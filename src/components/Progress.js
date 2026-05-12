@@ -20,7 +20,8 @@ import {
   Zap,
   Trophy,
   BarChart3,
-  ChevronDown
+  ChevronDown,
+  BookOpen
 } from 'lucide-react';
 import { MosqueIcon } from './icons/MosqueIcon';
 import {
@@ -187,8 +188,6 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
   const [timePeriod, setTimePeriod] = useState(() => {
     return localStorage.getItem('heatmap-default-period') || '3months';
   });
-  const [customStartDate, setCustomStartDate] = useState(() => localStorage.getItem('heatmap-custom-start') || '');
-  const [customEndDate, setCustomEndDate] = useState(() => localStorage.getItem('heatmap-custom-end') || '');
 
   // Filter data based on selected time period
   const getFilteredData = () => {
@@ -211,13 +210,6 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
         startDate.setFullYear(now.getFullYear() - 1);
         break;
       case 'all':
-        return data;
-      case 'custom':
-        if (customStartDate && customEndDate) {
-          return data.filter(item => {
-            return item.dateStr >= customStartDate && item.dateStr <= customEndDate;
-          });
-        }
         return data;
       default:
         startDate.setMonth(now.getMonth() - 3);
@@ -284,26 +276,8 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
     if (filteredData.length === 0) return [];
 
     const sortedData = [...filteredData].sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    // Determine the start date for the grid
-    let startDate;
-    if (timePeriod === 'custom' && customStartDate) {
-      const [y, m, d] = customStartDate.split('-').map(Number);
-      startDate = new Date(y, m - 1, d);
-    } else if (sortedData.length > 0) {
-      startDate = new Date(sortedData[0].date);
-    } else {
-      return [];
-    }
-
-    // Determine the end date for the grid
-    let endDate;
-    if (timePeriod === 'custom' && customEndDate) {
-      const [y, m, d] = customEndDate.split('-').map(Number);
-      endDate = new Date(y, m - 1, d);
-    } else {
-      endDate = new Date(); // Default to today
-    }
+    const startDate = new Date(sortedData[0].date);
+    const endDate = new Date(sortedData[sortedData.length - 1].date);
     
     const grid = [];
     const currentDate = new Date(startDate);
@@ -313,7 +287,6 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
     const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so go back 6 days to Monday
     currentDate.setDate(currentDate.getDate() - daysToMonday);
     
-    // Loop until we reach the end date
     while (currentDate <= endDate || grid.length % 7 !== 0) {
       const dateStr = formatDateForGrid(currentDate);
       const dataItem = sortedData.find(item => 
@@ -348,7 +321,7 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
   };
 
   return (
-    <div className="w-full mb-4">
+    <div className="w-full overflow-x-auto mb-4">
       {/* Time period filter buttons */}
       <div className="flex flex-wrap items-center justify-between mb-4">
         <div className="flex flex-wrap gap-2">
@@ -357,8 +330,7 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
             { value: '3months', label: '3 Months' },
             { value: '6months', label: '6 Months' },
             { value: '1year', label: '1 Year' },
-            { value: 'all', label: 'All Time' },
-            { value: 'custom', label: 'Custom' }
+            { value: 'all', label: 'All Time' }
           ].map(period => (
             <button
               key={period.value}
@@ -366,10 +338,10 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                 timePeriod === period.value
                   ? 'text-white'
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               }`}
               style={{
-                backgroundColor: timePeriod === period.value ? (isDark ? '#10b981' : '#059669') : 'transparent'
+                backgroundColor: timePeriod === period.value ? (isDark ? '#10b981' : '#059669') : 'transparent',
               }}
             >
               {period.label}
@@ -377,90 +349,56 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
           ))}
         </div>
       </div>
-
-      {timePeriod === 'custom' && (
-        <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-lg bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05]">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Start Date</label>
-            <input 
-              type="date" 
-              value={customStartDate} 
-              onChange={(e) => {
-                setCustomStartDate(e.target.value);
-                localStorage.setItem('heatmap-custom-start', e.target.value);
-              }}
-              className="px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-white/10 bg-white dark:bg-jj-canvas-dark text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-jj-accent" 
-            />
-          </div>
-          <div className="mt-4 text-gray-300 dark:text-white/10 hidden sm:block">—</div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">End Date</label>
-            <input 
-              type="date" 
-              value={customEndDate} 
-              onChange={(e) => {
-                setCustomEndDate(e.target.value);
-                localStorage.setItem('heatmap-custom-end', e.target.value);
-              }}
-              className="px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-white/10 bg-white dark:bg-jj-canvas-dark text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-jj-accent" 
-            />
-          </div>
-          <div className="ml-auto text-[10px] text-gray-400 italic">
-            Showing {filteredData.length} tracked days
+      
+      <div className="inline-block">
+        {/* Month labels */}
+        <div className="flex items-center mb-6">
+          <div className="w-12"></div>
+          <div className="flex relative w-full h-4">
+            {weeks.map((week, weekIndex) => {
+              const date = week[0].date;
+              const isFirstWeekOfMonth = weekIndex === 0 || 
+                (weekIndex > 0 && date.getMonth() !== weeks[weekIndex-1][0].date.getMonth());
+              
+              // Collision check: Skip the first month label if the next month starts very soon (within 2 weeks)
+              if (weekIndex === 0 && weeks.length > 2) {
+                const nextMonthWeekIndex = weeks.findIndex((w, i) => i > 0 && w[0].date.getMonth() !== date.getMonth());
+                if (nextMonthWeekIndex !== -1 && nextMonthWeekIndex < 3) {
+                  return null;
+                }
+              }
+              
+              if (isFirstWeekOfMonth) {
+                return (
+                  <div 
+                    key={weekIndex} 
+                    className="absolute text-[10px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap"
+                    style={{ left: `${weekIndex * 16}px` }}
+                  >
+                    {date.toLocaleDateString('en', { month: 'short', year: weekIndex === 0 || date.getMonth() === 0 ? 'numeric' : undefined })}
+                  </div>
+                );
+              }
+              return null;
+            })}
           </div>
         </div>
-      )}
-      
-        {/* Main heat map grid with horizontal scroll */}
-        <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
-          <div className="inline-block min-w-full">
-            {/* Month labels */}
-            <div className="flex items-center mb-6">
-              <div className="w-10"></div>
-              <div className="flex relative w-full h-4">
-                {weeks.map((week, weekIndex) => {
-                  const date = week[0].date;
-                  const isFirstWeekOfMonth = weekIndex === 0 || 
-                    (weekIndex > 0 && date.getMonth() !== weeks[weekIndex-1][0].date.getMonth());
-                  
-                  // Collision check: Skip the first month label if the next month starts very soon (within 2 weeks)
-                  if (weekIndex === 0 && weeks.length > 2) {
-                    const nextMonthWeekIndex = weeks.findIndex((w, i) => i > 0 && w[0].date.getMonth() !== date.getMonth());
-                    if (nextMonthWeekIndex !== -1 && nextMonthWeekIndex < 3) {
-                      return null;
-                    }
-                  }
-                  
-                  if (isFirstWeekOfMonth) {
-                    return (
-                      <div 
-                        key={weekIndex} 
-                        className="absolute text-[10px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap"
-                        style={{ left: `${weekIndex * 16}px` }}
-                      >
-                        {date.toLocaleDateString('en', { month: 'short', year: weekIndex === 0 || date.getMonth() === 0 ? 'numeric' : undefined })}
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              {/* Weekday labels - Sticky */}
-              <div className="sticky left-0 z-10 flex flex-col pr-4 bg-white dark:bg-jj-canvas-dark">
-                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Mon</div>
-                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
-                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Wed</div>
-                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
-                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Fri</div>
-                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
-                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Sun</div>
-              </div>
-              
-              {/* Calendar grid */}
-              <div className="flex">
+        
+        {/* Main heat map grid */}
+        <div className="flex items-start">
+          {/* Weekday labels */}
+          <div className="flex flex-col mr-2">
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Mon</div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Wed</div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Fri</div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
+            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Sun</div>
+          </div>
+          
+          {/* Calendar grid */}
+          <div className="flex">
             {weeks.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col mr-1">
                 {week.map((day, dayIndex) => (
@@ -505,7 +443,6 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
               </div>
             </div>
           )}
-        </div>
         </div>
       </div>
       
@@ -1373,6 +1310,30 @@ const Progress = () => {
           emphasize={true}
         />
       </div>
+      
+      {/* Surah Al-Kahf Stats Section */}
+      {stats.surahAlKahfStats.totalFridays > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 px-1">
+            <BookOpen className="w-4 h-4 text-purple-500" />
+            <h3 className="text-xs font-bold text-jj-muted dark:text-stone-500 uppercase tracking-widest">Surah Al-Kahf</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <KPIStatCard
+              label="Recited"
+              value={`${stats.surahAlKahfStats.recited}/${stats.surahAlKahfStats.totalFridays}`}
+              icon={BookOpen}
+              emphasize={true}
+            />
+            <KPIStatCard
+              label="Consistency"
+              value={`${(stats.surahAlKahfStats.consistency ?? 0).toFixed(1)}%`}
+              icon={Zap}
+              emphasize={true}
+            />
+          </div>
+        </div>
+      )}
 
       <>
         {stats.totalDays < 1 && stats.totalPrayers < 1 && (
