@@ -19,21 +19,15 @@
   }
 
   html {
-
     -webkit-tap-highlight-color: transparent;
-    overflow-x: hidden;
     width: 100%;
-
+    /* overflow-x: hidden can break position: sticky on some browsers */
   }
 
   body {
-
     @apply font-sans text-jj-ink bg-jj-canvas antialiased text-[15px] leading-relaxed;
-
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-    overflow-x: hidden;
     width: 100%;
-
   }
 
   .dark body {

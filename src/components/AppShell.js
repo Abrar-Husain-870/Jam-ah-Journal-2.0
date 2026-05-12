@@ -45,7 +45,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-jj-canvas text-jj-ink dark:bg-jj-canvas-dark dark:text-stone-200 font-sans antialiased pb-[calc(4.85rem+env(safe-area-inset-bottom,0px))] sm:pb-0 selection:bg-teal-200/45 dark:selection:bg-teal-900/45">
-      <header className="sticky top-0 z-40 bg-jj-surface/88 dark:bg-jj-surface-dark/90 backdrop-blur-xl backdrop-saturate-150 border-b border-black/[0.04] dark:border-white/[0.06] shadow-[0_1px_0_rgba(28,25,23,0.04)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)]">
+      <header className="fixed top-0 inset-x-0 z-40 bg-jj-surface/88 dark:bg-jj-surface-dark/90 backdrop-blur-xl backdrop-saturate-150 border-b border-black/[0.04] dark:border-white/[0.06] shadow-[0_1px_0_rgba(28,25,23,0.04)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)]">
         <div className="max-w-2xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-8 pt-3.5 pb-3 sm:pt-5 sm:pb-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -117,6 +117,9 @@ export function AppShell({
           </nav>
         </div>
       </header>
+      
+      {/* Spacer to prevent content from jumping under the fixed header */}
+      <div className="h-[73px] sm:h-[158px]" aria-hidden="true" />
 
       {!online && (
         <div className="max-w-2xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-8 pt-4 sm:pt-5">
