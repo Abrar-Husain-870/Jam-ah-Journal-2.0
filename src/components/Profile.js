@@ -109,7 +109,7 @@ const [userToDelete, setUserToDelete] = useState(null);
           // Total days tracked (aligned with Progress/Leaderboard logic)
           // Use all-time stats so it works with Firestore offline cache too
           const allStats = await getAllTimeStats(currentUser.uid, isMasjidModeEnabled);
-          setTotalDaysTracked(allStats.totalDays || 0);
+          setTotalDaysTracked(allStats.totalTrackedDays || allStats.totalDays || 0);
         } catch (error) {
           console.error('Error fetching user data:', error);
         }
@@ -260,16 +260,9 @@ const [userToDelete, setUserToDelete] = useState(null);
       
       await batch.commit();
       
-      // Refresh total days tracked
-      const currentYear = new Date().getFullYear();
-      let totalDays = 0;
-      
-      for (let year = currentYear - 1; year <= currentYear; year++) {
-        const yearStats = await getYearlyStats(currentUser.uid, year);
-        totalDays += yearStats.totalDays;
-      }
-      
-      setTotalDaysTracked(totalDays);
+      // Refresh total days tracked using all-time stats
+      const allStats = await getAllTimeStats(currentUser.uid, isMasjidModeEnabled);
+      setTotalDaysTracked(allStats.totalTrackedDays || allStats.totalDays || 0);
       setShowClearDataModal(false);
       alert('Data cleared successfully!');
     } catch (error) {
