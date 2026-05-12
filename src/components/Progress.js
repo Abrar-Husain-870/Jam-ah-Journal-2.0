@@ -32,7 +32,15 @@ import {
   getPrayerDataInRange,
 } from '../services/analyticsService';
 import { DEBUG_LOGS_ENABLED } from '../config/debug';
-import { PRAYER_STATUS, PRAYER_TYPES, PRAYER_SCORES, SURAH_ALKAHF, SURAH_STATUS, SURAH_SCORES } from '../services/prayerService';
+import { 
+  PRAYER_STATUS, 
+  PRAYER_TYPES, 
+  PRAYER_SCORES, 
+  SURAH_ALKAHF, 
+  SURAH_STATUS, 
+  SURAH_SCORES,
+  getPrayerScores 
+} from '../services/prayerService';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   AnalyticsCard,
@@ -46,12 +54,17 @@ import {
 } from '../analytics/progressDerivations';
 
 // Process heat map activity data for Heat.js
-const processHeatMapData = (prayerData) => {
+const processHeatMapData = (prayerData, masjidMode = false) => {
   if (!prayerData) return [];
   
   const data = [];
+  const prayerScores = getPrayerScores(masjidMode);
   
-  Object.entries(prayerData).forEach(([date, dayData]) => {
+  Object.entries(prayerData).forEach(([dateStr, dayData]) => {
+    // Correctly parse date from YYYY-MM-DD to avoid timezone shifts
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
     // Calculate daily score based on prayer statuses
     let dailyScore = 0;
     let completedPrayers = 0;
@@ -62,49 +75,45 @@ const processHeatMapData = (prayerData) => {
       if (status !== undefined && status !== null && status !== '') {
         hasAnyPrayer = true;
         completedPrayers++;
-        // Score based on prayer status
-        switch (status) {
-          case PRAYER_STATUS.MASJID:
-            dailyScore += 27;
-            break;
-          case PRAYER_STATUS.HOME:
-            dailyScore += 27;
-            break;
-          case PRAYER_STATUS.QAZA:
-            dailyScore += 13;
-            break;
-          case PRAYER_STATUS.NOT_PRAYED:
-            dailyScore += 0;
-            break;
-          default:
-            break;
-        }
+        // Use standard scoring from prayerService
+        dailyScore += prayerScores[status] || 0;
       }
     });
     
-    // Determine activity level (0-4) based on daily score and completion
-    let level = 0;
-    if (hasAnyPrayer && completedPrayers === 5) {
-      if (dailyScore >= 135) level = 4; // Perfect day (all prayers in masjid/home)
-      else if (dailyScore >= 100) level = 3; // Very good day (high score)
-      else if (dailyScore >= 50) level = 2; // Good day (moderate score)
-      else level = 1; // Some prayers completed
-    } else if (hasAnyPrayer && completedPrayers > 0) {
-      level = 1; // Partial day (some prayers completed)
+    // Add Surah Al-Kahf score if it's Friday
+    if (date.getDay() === 5) { // Friday
+      const surahStatus = dayData[SURAH_ALKAHF];
+      if (surahStatus && SURAH_SCORES[surahStatus]) {
+        dailyScore += SURAH_SCORES[surahStatus];
+      }
     }
     
-    // Create meaningful trend type based on actual prayer data
+    // Determine activity level (0-10) based on daily score
+    // Max possible score is 145 (5 masjid prayers + surah al-kahf)
+    let level = 0;
+    if (hasAnyPrayer) {
+      if (dailyScore > 0) {
+        // More granular levels (1-10) based on score
+        level = Math.max(1, Math.min(10, Math.ceil((dailyScore / 145) * 10)));
+      } else {
+        level = 0; // Data exists but score is 0
+      }
+    }
+    
+    // Create meaningful trend type based on score
     let trendType = 'No Data';
     if (hasAnyPrayer) {
-      if (level === 4) trendType = 'Perfect Day';
-      else if (level === 3) trendType = 'Excellent';
-      else if (level === 2) trendType = 'Good';
-      else if (level === 1) trendType = 'Partial';
+      if (dailyScore >= 135) trendType = 'Exceptional';
+      else if (dailyScore >= 100) trendType = 'Excellent';
+      else if (dailyScore >= 60) trendType = 'Good';
+      else if (dailyScore >= 30) trendType = 'Fair';
+      else if (dailyScore > 0) trendType = 'Partial';
+      else trendType = 'Zero Score';
     }
     
-    // Heat.js format: Include all days with meaningful data
     data.push({
-      date: new Date(date),
+      date: date,
+      dateStr: dateStr, // Use original string for stable matching
       trendType: trendType,
       value: completedPrayers,
       score: dailyScore,
@@ -113,8 +122,6 @@ const processHeatMapData = (prayerData) => {
     });
   });
   
-  console.log('Heat map processed data:', data.length, 'items');
-  console.log('Sample data:', data.slice(0, 3));
   return data;
 };
 
@@ -178,9 +185,10 @@ const processPrayerWisePerformance = (prayerData) => {
 const HeatMapComponent = React.memo(({ data, isDark }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [timePeriod, setTimePeriod] = useState(() => {
-    // Load saved default from localStorage or use '3months' as fallback
     return localStorage.getItem('heatmap-default-period') || '3months';
   });
+  const [customStartDate, setCustomStartDate] = useState(() => localStorage.getItem('heatmap-custom-start') || '');
+  const [customEndDate, setCustomEndDate] = useState(() => localStorage.getItem('heatmap-custom-end') || '');
 
   // Filter data based on selected time period
   const getFilteredData = () => {
@@ -203,7 +211,13 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
         startDate.setFullYear(now.getFullYear() - 1);
         break;
       case 'all':
-        // Return all data
+        return data;
+      case 'custom':
+        if (customStartDate && customEndDate) {
+          return data.filter(item => {
+            return item.dateStr >= customStartDate && item.dateStr <= customEndDate;
+          });
+        }
         return data;
       default:
         startDate.setMonth(now.getMonth() - 3);
@@ -212,35 +226,57 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
     return data.filter(item => new Date(item.date) >= startDate);
   };
 
-  const filteredData = getFilteredData();
-
-  // Check if current period is the default
-  const isCurrentDefault = timePeriod === localStorage.getItem('heatmap-default-period');
-
-  // Set default time period
-  const setDefaultPeriod = () => {
-    localStorage.setItem('heatmap-default-period', timePeriod);
+  const handlePeriodChange = (newPeriod) => {
+    setTimePeriod(newPeriod);
+    localStorage.setItem('heatmap-default-period', newPeriod);
   };
 
-  // Get color based on prayer level
+  const filteredData = getFilteredData();
+
+  // Get color based on prayer level (0-10)
+  // Higher level = more score = darker green shade
   const getColor = (level) => {
     if (isDark) {
-      switch (level) {
-        case 4: return '#22c55e'; // Bright green
-        case 3: return '#86efac'; // Medium green  
-        case 2: return '#bbf7d0'; // Light green
-        case 1: return '#dcfce7'; // Very light green
-        default: return '#374151'; // Dark grey
-      }
+      // In dark mode, we go from a very light green to a solid green
+      const darkColors = [
+        '#1f2937', // 0: Gray-800
+        '#f0fdf4', // 1: Green-50
+        '#dcfce7', // 2: Green-100
+        '#bbf7d0', // 3: Green-200
+        '#86efac', // 4: Green-300
+        '#4ade80', // 5: Green-400
+        '#22c55e', // 6: Green-500
+        '#16a34a', // 7: Green-600
+        '#15803d', // 8: Green-700
+        '#166534', // 9: Green-800
+        '#14532d', // 10: Green-900 (Darkest green)
+      ];
+      return darkColors[level] || darkColors[0];
     } else {
-      switch (level) {
-        case 4: return '#16a34a'; // Dark green
-        case 3: return '#22c55e'; // Bright green
-        case 2: return '#4ade80'; // Medium green
-        case 1: return '#86efac'; // Light green
-        default: return '#e5e7eb'; // Light grey
-      }
+      // In light mode, we go from a very light green to a deep dark green
+      const lightColors = [
+        '#f3f4f6', // 0: Gray-100
+        '#dcfce7', // 1: Green-100
+        '#bbf7d0', // 2: Green-200
+        '#86efac', // 3: Green-300
+        '#4ade80', // 4: Green-400
+        '#22c55e', // 5: Green-500
+        '#16a34a', // 6: Green-600
+        '#15803d', // 7: Green-700
+        '#166534', // 8: Green-800
+        '#14532d', // 9: Green-900
+        '#064e3b', // 10: Green-950 (Darkest)
+      ];
+      return lightColors[level] || lightColors[0];
     }
+  };
+
+  // Helper to format date consistently for matching
+  const formatDateForGrid = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   // Generate calendar grid
@@ -248,8 +284,26 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
     if (filteredData.length === 0) return [];
 
     const sortedData = [...filteredData].sort((a, b) => new Date(a.date) - new Date(b.date));
-    const startDate = new Date(sortedData[0].date);
-    const endDate = new Date(sortedData[sortedData.length - 1].date);
+    
+    // Determine the start date for the grid
+    let startDate;
+    if (timePeriod === 'custom' && customStartDate) {
+      const [y, m, d] = customStartDate.split('-').map(Number);
+      startDate = new Date(y, m - 1, d);
+    } else if (sortedData.length > 0) {
+      startDate = new Date(sortedData[0].date);
+    } else {
+      return [];
+    }
+
+    // Determine the end date for the grid
+    let endDate;
+    if (timePeriod === 'custom' && customEndDate) {
+      const [y, m, d] = customEndDate.split('-').map(Number);
+      endDate = new Date(y, m - 1, d);
+    } else {
+      endDate = new Date(); // Default to today
+    }
     
     const grid = [];
     const currentDate = new Date(startDate);
@@ -259,14 +313,16 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
     const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so go back 6 days to Monday
     currentDate.setDate(currentDate.getDate() - daysToMonday);
     
+    // Loop until we reach the end date
     while (currentDate <= endDate || grid.length % 7 !== 0) {
-      const dateStr = currentDate.toISOString().split('T')[0];
+      const dateStr = formatDateForGrid(currentDate);
       const dataItem = sortedData.find(item => 
-        item.date.toISOString().split('T')[0] === dateStr
+        (item.dateStr || item.date.toISOString().split('T')[0]) === dateStr
       );
       
       grid.push({
         date: new Date(currentDate),
+        dateStr: dateStr,
         data: dataItem,
         isCurrentMonth: currentDate.getMonth() === startDate.getMonth()
       });
@@ -284,14 +340,15 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
   }
 
   const getTooltipText = (item) => {
+    const dateStr = item.date.toLocaleDateString();
     if (!item.data) {
-      return `${item.date.toLocaleDateString()}: No data`;
+      return `${dateStr}: No data`;
     }
-    return `${item.date.toLocaleDateString()}: ${item.data.trendType} (${item.data.value}/5 prayers)`;
+    return `${dateStr}: ${item.data.score} points`;
   };
 
   return (
-    <div className="w-full overflow-x-auto mb-4">
+    <div className="w-full mb-4">
       {/* Time period filter buttons */}
       <div className="flex flex-wrap items-center justify-between mb-4">
         <div className="flex flex-wrap gap-2">
@@ -300,78 +357,110 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
             { value: '3months', label: '3 Months' },
             { value: '6months', label: '6 Months' },
             { value: '1year', label: '1 Year' },
-            { value: 'all', label: 'All Time' }
+            { value: 'all', label: 'All Time' },
+            { value: 'custom', label: 'Custom' }
           ].map(period => (
             <button
               key={period.value}
-              onClick={() => setTimePeriod(period.value)}
+              onClick={() => handlePeriodChange(period.value)}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                 timePeriod === period.value
                   ? 'text-white'
-                  : isDark
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
               style={{
-                backgroundColor: timePeriod === period.value ? 'rgb(5, 150, 105)' : undefined
+                backgroundColor: timePeriod === period.value ? (isDark ? '#10b981' : '#059669') : 'transparent'
               }}
             >
               {period.label}
             </button>
           ))}
         </div>
-        
-        {/* Set as default button */}
-        {!isCurrentDefault && (
-          <div className="mt-2 sm:mt-0">
-            <button
-              onClick={setDefaultPeriod}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors border ${
-                isDark
-                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-              }`}
-              title={`Set "${timePeriod === 'all' ? 'All time' : timePeriod.replace('months', ' months').replace('month', ' month').replace('year', ' year')}" as default`}
-            >
-              Set as default
-            </button>
-          </div>
-        )}
       </div>
-      
-      <div className="inline-block">
-        {/* Month labels */}
-        <div className="flex items-center mb-2">
-          <div className="w-12"></div>
-          <div className="flex">
-            {Array.from(new Set(weeks.map((week, weekIndex) => {
-              if (week[0]) {
-                return week[0].date.toLocaleDateString('en', { month: 'short', year: 'numeric' });
-              }
-              return '';
-            }))).map((month, index) => (
-              <div key={index} className="text-xs text-gray-500 mx-2">
-                {month}
-              </div>
-            ))}
+
+      {timePeriod === 'custom' && (
+        <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-lg bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05]">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Start Date</label>
+            <input 
+              type="date" 
+              value={customStartDate} 
+              onChange={(e) => {
+                setCustomStartDate(e.target.value);
+                localStorage.setItem('heatmap-custom-start', e.target.value);
+              }}
+              className="px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-white/10 bg-white dark:bg-jj-canvas-dark text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-jj-accent" 
+            />
+          </div>
+          <div className="mt-4 text-gray-300 dark:text-white/10 hidden sm:block">—</div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">End Date</label>
+            <input 
+              type="date" 
+              value={customEndDate} 
+              onChange={(e) => {
+                setCustomEndDate(e.target.value);
+                localStorage.setItem('heatmap-custom-end', e.target.value);
+              }}
+              className="px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-white/10 bg-white dark:bg-jj-canvas-dark text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-jj-accent" 
+            />
+          </div>
+          <div className="ml-auto text-[10px] text-gray-400 italic">
+            Showing {filteredData.length} tracked days
           </div>
         </div>
-        
-        {/* Main heat map grid */}
-        <div className="flex items-start">
-          {/* Weekday labels */}
-          <div className="flex flex-col mr-2">
-            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Mon</div>
-            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
-            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Wed</div>
-            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
-            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Fri</div>
-            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
-            <div className="text-xs text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Sun</div>
-          </div>
-          
-          {/* Calendar grid */}
-          <div className="flex">
+      )}
+      
+        {/* Main heat map grid with horizontal scroll */}
+        <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
+          <div className="inline-block min-w-full">
+            {/* Month labels */}
+            <div className="flex items-center mb-6">
+              <div className="w-10"></div>
+              <div className="flex relative w-full h-4">
+                {weeks.map((week, weekIndex) => {
+                  const date = week[0].date;
+                  const isFirstWeekOfMonth = weekIndex === 0 || 
+                    (weekIndex > 0 && date.getMonth() !== weeks[weekIndex-1][0].date.getMonth());
+                  
+                  // Collision check: Skip the first month label if the next month starts very soon (within 2 weeks)
+                  if (weekIndex === 0 && weeks.length > 2) {
+                    const nextMonthWeekIndex = weeks.findIndex((w, i) => i > 0 && w[0].date.getMonth() !== date.getMonth());
+                    if (nextMonthWeekIndex !== -1 && nextMonthWeekIndex < 3) {
+                      return null;
+                    }
+                  }
+                  
+                  if (isFirstWeekOfMonth) {
+                    return (
+                      <div 
+                        key={weekIndex} 
+                        className="absolute text-[10px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap"
+                        style={{ left: `${weekIndex * 16}px` }}
+                      >
+                        {date.toLocaleDateString('en', { month: 'short', year: weekIndex === 0 || date.getMonth() === 0 ? 'numeric' : undefined })}
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            </div>
+            
+            <div className="flex items-start">
+              {/* Weekday labels - Sticky */}
+              <div className="sticky left-0 z-10 flex flex-col pr-4 bg-white dark:bg-jj-canvas-dark">
+                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Mon</div>
+                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
+                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Wed</div>
+                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
+                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Fri</div>
+                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1"></div>
+                <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 w-8 h-3 flex items-center justify-end mb-1">Sun</div>
+              </div>
+              
+              {/* Calendar grid */}
+              <div className="flex">
             {weeks.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col mr-1">
                 {week.map((day, dayIndex) => (
@@ -380,7 +469,6 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
                     className="w-3 h-3 rounded-sm cursor-pointer transition-all hover:scale-110 mb-1"
                     style={{
                       backgroundColor: getColor(day.data?.level || 0),
-                      opacity: day.isCurrentMonth ? 1 : 0.3
                     }}
                     title={getTooltipText(day)}
                     onClick={() => setSelectedDate(day)}
@@ -395,11 +483,11 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
         <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
           <div className="flex items-center space-x-4">
             <span>Less</span>
-            <div className="flex space-x-1">
-              {[0, 1, 2, 3, 4].map(level => (
+            <div className="flex space-x-0.5">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(level => (
                 <div
                   key={level}
-                  className="w-3 h-3 rounded-sm"
+                  className="w-2.5 h-2.5 rounded-sm"
                   style={{ backgroundColor: getColor(level) }}
                 />
               ))}
@@ -409,10 +497,15 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
           
           {selectedDate && (
             <div className="text-right">
-              <div>{selectedDate.date.toLocaleDateString()}</div>
-              <div>{selectedDate.data ? selectedDate.data.trendType : 'No data'}</div>
+              <div className="font-medium text-gray-700 dark:text-gray-300">
+                {selectedDate.date.toLocaleDateString()}: {selectedDate.data ? `${selectedDate.data.score} points` : 'No data'}
+              </div>
+              <div className="text-gray-500">
+                {selectedDate.data ? selectedDate.data.trendType : ''}
+              </div>
             </div>
           )}
+        </div>
         </div>
       </div>
       
@@ -422,7 +515,7 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
           <div className="flex items-center space-x-2">
             <span className="font-semibold text-gray-700 dark:text-gray-300">Prayer Activity</span>
             <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400">
-              {filteredData.length} days
+              {filteredData.filter(d => d.hasData).length} tracked days
             </span>
             <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-400">
               {timePeriod === 'all' ? 'All time' : timePeriod.replace('months', ' months').replace('month', ' month').replace('year', ' year')}
@@ -448,10 +541,14 @@ const Progress = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [masjidMode, setMasjidMode] = useState(false);
-  const [trendType, setTrendType] = useState('average'); // 'average' | 'composite'
+  const [trendType, setTrendType] = useState(() => {
+    return localStorage.getItem('progress_trend_type') || 'average';
+  }); // 'average' | 'composite'
   const [dailyTrend, setDailyTrend] = useState([]);
   const [cumulativeTrend, setCumulativeTrend] = useState([]); // leaderboard-style cumulative series
-  const [smooth, setSmooth] = useState(false); // moving average smoothing
+  const [smooth, setSmooth] = useState(() => {
+    return localStorage.getItem('progress_smooth') === 'true';
+  }); // moving average smoothing
   const [zoomReady, setZoomReady] = useState(false); // zoom plugin loaded
   const [isSmallScreen, setIsSmallScreen] = useState(typeof window !== 'undefined' ? window.innerWidth < 480 : false);
   const [atAGlance, setAtAGlance] = useState(null);
@@ -592,7 +689,7 @@ const Progress = () => {
         const prayerWiseData = processPrayerWisePerformance(prayerData);
         
         // Process heat map activity data
-        const heatMapData = processHeatMapData(prayerData);
+        const heatMapData = processHeatMapData(prayerData, masjidMode);
         
         setAtAGlance({
           weekSparkLabels: spark.labels,
@@ -1234,8 +1331,8 @@ const Progress = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         <KPIStatCard
-          label="Completed Days"
-          value={stats.totalDays ?? 0}
+          label="Days Tracked"
+          value={stats?.totalTrackedDays || stats?.totalDays || 0}
           icon={Calendar}
           emphasize={true}
         />
@@ -1432,7 +1529,10 @@ const Progress = () => {
                     ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-sm ring-1 ring-black/[0.06] dark:ring-white/[0.08]'
                     : 'text-jj-muted dark:text-stone-400 hover:text-jj-ink dark:hover:text-stone-200'
                 }`}
-                onClick={() => setTrendType('average')}
+                onClick={() => {
+                  setTrendType('average');
+                  localStorage.setItem('progress_trend_type', 'average');
+                }}
               >
                 Average
               </button>
@@ -1443,7 +1543,10 @@ const Progress = () => {
                     ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-sm ring-1 ring-black/[0.06] dark:ring-white/[0.08]'
                     : 'text-jj-muted dark:text-stone-400 hover:text-jj-ink dark:hover:text-stone-200'
                 }`}
-                onClick={() => setTrendType('composite')}
+                onClick={() => {
+                  setTrendType('composite');
+                  localStorage.setItem('progress_trend_type', 'composite');
+                }}
               >
                 Composite
               </button>
@@ -1454,7 +1557,11 @@ const Progress = () => {
                     ? 'bg-jj-ink text-white dark:bg-stone-200 dark:text-stone-900'
                     : 'text-jj-muted dark:text-stone-400 hover:text-jj-ink dark:hover:text-stone-200'
                 }`}
-                onClick={() => setSmooth((s) => !s)}
+                onClick={() => {
+                  const newSmooth = !smooth;
+                  setSmooth(newSmooth);
+                  localStorage.setItem('progress_smooth', newSmooth.toString());
+                }}
                 title="Toggle smoothing (moving average)"
               >
                 Smooth {smooth ? 'on' : 'off'}
