@@ -20,7 +20,8 @@ import {
   TrendingDown,
   Minus,
   X,
-  Lock
+  Lock,
+  Clock
 } from 'lucide-react';
 import { 
   collection, 
@@ -764,7 +765,8 @@ const Leaderboard = () => {
                   bestStreak: stats.bestStreak,
                   masjidPercentage: stats.masjidPercentage,
                   trend: stats.trend,
-                  compositeScore: stats.compositeScore
+                  compositeScore: stats.compositeScore,
+                  daysSinceLastActivity: stats.daysSinceLastActivity
                 };
               }
               return null;
@@ -1460,11 +1462,11 @@ const Leaderboard = () => {
         </div>
       </div>
         
-      {/* Metrics Row — Best, Consistency, Masjid only */}
+      {/* Metrics Row — Best, Consistency, Masjid, Last Tracked, Streak */}
       {user.totalDays > 0 && (
-        <div className={`flex items-center gap-2 sm:gap-3 mt-3 ${isInactive ? 'opacity-75' : ''}`}>
+        <div className={`flex flex-wrap items-center gap-x-3 gap-y-2.5 mt-3 ${isInactive ? 'opacity-75' : ''}`}>
           <div className="flex flex-col items-center gap-0.5">
-            <span className={`text-xs ${metaClass} font-medium`}>Best</span>
+            <span className={`text-[10px] sm:text-xs ${metaClass} font-medium`}>Best</span>
             {user.bestStreak > 0 ? (
               <div
                 className={`${lbPillBase} ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300`}
@@ -1482,7 +1484,7 @@ const Leaderboard = () => {
           </div>
 
           <div className="flex flex-col items-center gap-0.5">
-            <span className={`text-xs ${metaClass} font-medium`}>Consistency</span>
+            <span className={`text-[10px] sm:text-xs ${metaClass} font-medium`}>Consistency</span>
             {user.consistency > 0 ? (
               getConsistencyBadge(user.consistency)
             ) : (
@@ -1496,7 +1498,7 @@ const Leaderboard = () => {
 
           {!user.masjidMode && (
             <div className="flex flex-col items-center gap-0.5">
-              <span className={`text-xs ${metaClass} font-medium`}>Masjid</span>
+              <span className={`text-[10px] sm:text-xs ${metaClass} font-medium`}>Masjid</span>
               {user.masjidPercentage > 0 ? (
                 getMasjidBadge(user.masjidPercentage)
               ) : (
@@ -1508,6 +1510,30 @@ const Leaderboard = () => {
               )}
             </div>
           )}
+
+          <div className="flex flex-col items-center gap-0.5">
+            <span className={`text-[10px] sm:text-xs ${metaClass} font-medium`}>Last Tracked</span>
+            <div className={`${lbPillBase} ${user.daysSinceLastActivity === 0 
+                ? 'ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300'
+                : 'ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500'} whitespace-nowrap`}>
+              <Clock className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
+              {user.daysSinceLastActivity === 0 
+                ? 'Today' 
+                : user.daysSinceLastActivity === 1 
+                  ? 'Yesterday' 
+                  : user.daysSinceLastActivity === 999 
+                    ? 'None' 
+                    : `${user.daysSinceLastActivity}d`}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-0.5">
+            <span className={`text-[10px] sm:text-xs ${metaClass} font-medium`}>current streak</span>
+            <div className={`${lbPillBase} ring-orange-900/12 dark:ring-orange-400/18 bg-orange-50/90 dark:bg-orange-950/40 text-orange-600 dark:text-orange-300 whitespace-nowrap`}>
+              <Zap className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
+              {user.currentStreak || 0}d
+            </div>
+          </div>
         </div>
       )}
       
@@ -1969,9 +1995,9 @@ const Leaderboard = () => {
                         
                         {/* Competitive Metrics Row - Always show for users with data */}
                         {friend.totalDays > 0 && (
-                          <div className="flex items-center gap-2 sm:gap-3 mt-3 pt-3 border-t border-jj-border/60 dark:border-white/[0.08]">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-2.5 mt-3 pt-3 border-t border-jj-border/60 dark:border-white/[0.08]">
                             <div className="flex flex-col items-center gap-0.5">
-                              <span className="text-xs text-jj-muted dark:text-stone-500 font-medium">Best</span>
+                              <span className="text-[10px] sm:text-xs text-jj-muted dark:text-stone-500 font-medium">Best</span>
                               {friend.bestStreak > 0 ? (
                                 <div
                                   className={`${lbPillBase} ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300`}
@@ -1988,7 +2014,7 @@ const Leaderboard = () => {
                               )}
                             </div>
                             <div className="flex flex-col items-center gap-0.5">
-                              <span className="text-xs text-jj-muted dark:text-stone-500 font-medium">Consistency</span>
+                              <span className="text-[10px] sm:text-xs text-jj-muted dark:text-stone-500 font-medium">Consistency</span>
                               {friend.consistency > 0 ? (
                                 getConsistencyBadge(friend.consistency)
                               ) : (
@@ -2001,7 +2027,7 @@ const Leaderboard = () => {
                             </div>
                             {!friend.masjidMode && (
                               <div className="flex flex-col items-center gap-0.5">
-                                <span className="text-xs text-jj-muted dark:text-stone-500 font-medium">Masjid</span>
+                                <span className="text-[10px] sm:text-xs text-jj-muted dark:text-stone-500 font-medium">Masjid</span>
                                 {friend.masjidPercentage > 0 ? (
                                   getMasjidBadge(friend.masjidPercentage)
                                 ) : (
@@ -2013,6 +2039,30 @@ const Leaderboard = () => {
                                 )}
                               </div>
                             )}
+
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-[10px] sm:text-xs text-jj-muted dark:text-stone-500 font-medium">Last Tracked</span>
+                              <div className={`${lbPillBase} ${friend.daysSinceLastActivity === 0 
+                                  ? 'ring-teal-900/12 dark:ring-teal-400/18 bg-teal-50/90 dark:bg-teal-950/40 text-jj-accent dark:text-teal-300'
+                                  : 'ring-black/[0.06] dark:ring-white/[0.08] bg-jj-mist/70 dark:bg-white/[0.05] text-jj-muted dark:text-stone-500'} whitespace-nowrap`}>
+                                <Clock className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
+                                {friend.daysSinceLastActivity === 0 
+                                  ? 'Today' 
+                                  : friend.daysSinceLastActivity === 1 
+                                    ? 'Yesterday' 
+                                    : friend.daysSinceLastActivity === 999 
+                                      ? 'None' 
+                                      : `${friend.daysSinceLastActivity}d`}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-[10px] sm:text-xs text-jj-muted dark:text-stone-500 font-medium">current streak</span>
+                              <div className={`${lbPillBase} ring-orange-900/12 dark:ring-orange-400/18 bg-orange-50/90 dark:bg-orange-950/40 text-orange-600 dark:text-orange-300 whitespace-nowrap`}>
+                                <Zap className="w-3 h-3 shrink-0 opacity-90" strokeWidth={2} />
+                                {friend.currentStreak || 0}d
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
