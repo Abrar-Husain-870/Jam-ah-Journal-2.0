@@ -12,6 +12,11 @@ if (!DEBUG_LOGS_ENABLED) {
   console.error = noop;
   console.info = noop;
   console.debug = noop;
+  console.table = noop;
+  console.trace = noop;
+  console.group = noop;
+  console.groupEnd = noop;
+  console.groupCollapsed = noop;
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
