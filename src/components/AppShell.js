@@ -67,7 +67,16 @@ export function AppShell({
                 </h1>
               </div>
             </div>
-            <div className="flex items-center gap-0.5 shrink-0">
+
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <a
+                href={process.env.REACT_APP_RAZORPAY_PAYMENT_LINK || "https://rzp.io/rzp/ZPA1MP4J"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="jj-interactive-press px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-jj text-[0.8125rem] font-semibold tracking-tight transition-all duration-jj ease-jj-out text-jj-accent hover:text-jj-accent-soft dark:text-teal-300 dark:hover:text-teal-200 bg-jj-accent/[0.08] hover:bg-jj-accent/[0.14] dark:bg-teal-400/[0.09] dark:hover:bg-teal-400/[0.16] ring-1 ring-jj-accent/15 dark:ring-teal-400/20 whitespace-nowrap shadow-sm mr-1"
+              >
+                Support Us
+              </a>
               <button
                 type="button"
                 onClick={toggleTheme}
@@ -103,11 +112,10 @@ export function AppShell({
                   type="button"
                   onClick={() => setCurrentPage(id)}
                   aria-current={active ? 'page' : undefined}
-                  className={`jj-interactive-press flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-jj text-[0.8125rem] font-semibold tracking-tight transition-all duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark ${
-                    active
-                      ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-jj-card dark:shadow-none ring-1 ring-black/[0.06] dark:ring-white/[0.1]'
-                      : 'text-jj-muted dark:text-stone-500 hover:text-jj-ink dark:hover:text-stone-200'
-                  }`}
+                  className={`jj-interactive-press flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-jj text-[0.8125rem] font-semibold tracking-tight transition-all duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark ${active
+                    ? 'bg-jj-surface dark:bg-jj-elevated-dark text-jj-ink dark:text-stone-100 shadow-jj-card dark:shadow-none ring-1 ring-black/[0.06] dark:ring-white/[0.1]'
+                    : 'text-jj-muted dark:text-stone-500 hover:text-jj-ink dark:hover:text-stone-200'
+                    }`}
                 >
                   <Icon className="w-[1.05rem] h-[1.05rem] opacity-90" strokeWidth={1.85} />
                   <span>{label}</span>
@@ -117,7 +125,7 @@ export function AppShell({
           </nav>
         </div>
       </header>
-      
+
       {/* Spacer to prevent content from jumping under the fixed header */}
       <div className="h-[73px] sm:h-[158px]" aria-hidden="true" />
 
@@ -159,11 +167,10 @@ export function AppShell({
                 type="button"
                 onClick={() => setCurrentPage(id)}
                 aria-current={active ? 'page' : undefined}
-                className={`jj-interactive-press flex flex-1 flex-col items-center gap-0.5 py-2 px-0.5 rounded-jj-lg min-h-[3.35rem] transition-colors duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jj-accent ${
-                  active
-                    ? 'text-jj-accent dark:text-teal-300 bg-jj-accent/[0.08] dark:bg-teal-400/[0.09]'
-                    : 'text-jj-muted dark:text-stone-500'
-                }`}
+                className={`jj-interactive-press flex flex-1 flex-col items-center gap-0.5 py-2 px-0.5 rounded-jj-lg min-h-[3.35rem] transition-colors duration-jj ease-jj-out focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jj-accent ${active
+                  ? 'text-jj-accent dark:text-teal-300 bg-jj-accent/[0.08] dark:bg-teal-400/[0.09]'
+                  : 'text-jj-muted dark:text-stone-500'
+                  }`}
               >
                 <Icon className="w-[1.2rem] h-[1.2rem]" strokeWidth={active ? 2.15 : 1.7} />
                 <span className="truncate w-full text-center text-[0.625rem] font-semibold tracking-[0.02em]">
