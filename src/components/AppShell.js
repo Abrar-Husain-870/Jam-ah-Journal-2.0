@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   LogOut,
   User,
@@ -8,6 +8,9 @@ import {
   BookOpen,
   Sun,
   Moon,
+  Globe,
+  X,
+  Heart,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -28,6 +31,7 @@ export function AppShell({
 }) {
   const { currentUser, logout, userNickname } = useAuth();
   const { resolvedTheme, toggleTheme } = useTheme();
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -69,14 +73,13 @@ export function AppShell({
             </div>
 
             <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-              <a
-                href={process.env.REACT_APP_RAZORPAY_PAYMENT_LINK || "https://rzp.io/rzp/ZPA1MP4J"}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowSupportModal(true)}
                 className="jj-interactive-press px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-jj text-[0.8125rem] font-semibold tracking-tight transition-all duration-jj ease-jj-out text-jj-accent hover:text-jj-accent-soft dark:text-teal-300 dark:hover:text-teal-200 bg-jj-accent/[0.08] hover:bg-jj-accent/[0.14] dark:bg-teal-400/[0.09] dark:hover:bg-teal-400/[0.16] ring-1 ring-jj-accent/15 dark:ring-teal-400/20 whitespace-nowrap shadow-sm mr-1"
               >
                 Support Us
-              </a>
+              </button>
               <button
                 type="button"
                 onClick={toggleTheme}
@@ -181,6 +184,92 @@ export function AppShell({
           })}
         </div>
       </nav>
+
+      {/* Support Us Modal */}
+      {showSupportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop overlay */}
+          <div
+            className="absolute inset-0 bg-black/60 dark:bg-black/75 backdrop-blur-sm transition-opacity duration-200"
+            onClick={() => setShowSupportModal(false)}
+          />
+          
+          {/* Modal Container */}
+          <div className="relative w-full max-w-sm transform overflow-hidden rounded-jj-xl bg-jj-surface dark:bg-jj-surface-dark border border-black/[0.06] dark:border-white/[0.08] p-5 sm:p-6 shadow-jj dark:shadow-jj-dark jj-modal-panel-motion">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4.5">
+              <div className="flex items-center gap-2">
+                <Heart className="w-5 h-5 text-rose-500 fill-rose-500 animate-pulse animate-duration-1000" />
+                <h3 className="text-base sm:text-lg font-bold text-jj-ink dark:text-stone-50 tracking-tight">
+                  Support Jamā&apos;ah Journal
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSupportModal(false)}
+                className="p-1 rounded-jj hover:bg-black/[0.05] dark:hover:bg-white/[0.05] text-jj-muted hover:text-jj-ink dark:text-stone-400 dark:hover:text-stone-100 transition-colors"
+                aria-label="Close modal"
+              >
+                <X className="w-5 h-5" strokeWidth={2} />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <p className="text-sm text-jj-ink-muted dark:text-stone-400 leading-relaxed mb-6">
+              Support Jamā&apos;ah Journal in helping Muslims build consistency in their prayers and daily habits. Your contribution helps us maintain and improve the platform while keeping it accessible, secure, and free from intrusive ads. We pray this effort becomes a source of lasting benefit for everyone involved.
+            </p>
+            
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <a
+                href="https://rzp.io/rzp/ZPA1MP4J"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowSupportModal(false)}
+                className="jj-interactive-press flex items-center justify-between w-full p-4 rounded-jj border border-black/[0.05] dark:border-white/[0.06] bg-jj-surface-2 dark:bg-jj-elevated-dark hover:bg-jj-accent/[0.05] dark:hover:bg-teal-400/[0.05] hover:border-jj-accent/25 dark:hover:border-teal-400/25 transition-all duration-150 group"
+              >
+                <div className="text-left pr-2">
+                  <span className="block text-[0.875rem] font-semibold text-jj-ink dark:text-stone-100">
+                    Indian Donations
+                  </span>
+                  <span className="block text-[0.6875rem] text-jj-muted dark:text-stone-500 mt-0.5 leading-normal">
+                    UPI, domestic cards, netbanking (INR)
+                  </span>
+                </div>
+                <span className="text-jj-accent dark:text-teal-300 text-xs font-semibold group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">
+                  Pay with Razorpay &rarr;
+                </span>
+              </a>
+              
+              <a
+                href="https://www.paypal.com/ncp/payment/9T4CGQJ8AQ4LE"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowSupportModal(false)}
+                className="jj-interactive-press flex items-center justify-between w-full p-4 rounded-jj border border-black/[0.05] dark:border-white/[0.06] bg-jj-surface-2 dark:bg-jj-elevated-dark hover:bg-jj-accent/[0.05] dark:hover:bg-teal-400/[0.05] hover:border-jj-accent/25 dark:hover:border-teal-400/25 transition-all duration-150 group"
+              >
+                <div className="text-left pr-2">
+                  <span className="block text-[0.875rem] font-semibold text-jj-ink dark:text-stone-100 flex items-center gap-1.5">
+                    International Donations
+                    <Globe className="w-3.5 h-3.5 text-jj-muted dark:text-stone-500" />
+                  </span>
+                  <span className="block text-[0.6875rem] text-jj-muted dark:text-stone-500 mt-0.5 leading-normal">
+                    PayPal, international cards
+                  </span>
+                </div>
+                <span className="text-jj-accent dark:text-teal-300 text-xs font-semibold group-hover:translate-x-1 transition-transform duration-150 whitespace-nowrap">
+                  Pay with PayPal &rarr;
+                </span>
+              </a>
+            </div>
+            
+            {/* Footer note */}
+            <p className="text-[0.6875rem] text-center text-jj-muted dark:text-stone-500 mt-5 leading-normal">
+              Selecting an option will open the secure payment gateway in a new tab.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
