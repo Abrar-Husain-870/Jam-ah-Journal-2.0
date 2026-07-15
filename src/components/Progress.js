@@ -44,6 +44,8 @@ import {
 } from '../services/prayerService';
 import CountUp from './CountUp';
 import { useTheme } from '../contexts/ThemeContext';
+import { usePercentageMode, MAX_AVERAGE_SCORE } from '../contexts/PercentageModeContext';
+
 import {
   AnalyticsCard,
   ChartCard,
@@ -473,6 +475,8 @@ const HeatMapComponent = React.memo(({ data, isDark }) => {
 const Progress = () => {
   const { currentUser } = useAuth();
   const { resolvedTheme } = useTheme();
+  const { formatScore, formatScoreNumber, scoreLabel, percentageMode } = usePercentageMode();
+
   const [timeframe, setTimeframe] = useState('alltime'); // Default to 'alltime'
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -961,11 +965,17 @@ const Progress = () => {
   }, [cumulativeTrend, dailyTrend, isSmallScreen]);
   // Use leaderboard-style cumulative series when available, otherwise fallback to per-day values
   const trendDataValues = React.useMemo(() => {
+    let vals;
     if (cumulativeTrend.length > 0) {
-      return trendType === 'average' ? cumulativeTrend.map(p => p.avg) : cumulativeTrend.map(p => p.comp);
+      vals = trendType === 'average' ? cumulativeTrend.map(p => p.avg) : cumulativeTrend.map(p => p.comp);
+    } else {
+      vals = trendType === 'average' ? dailyTrend.map(p => p.averageScore) : dailyTrend.map(p => p.compositeScore);
     }
-    return trendType === 'average' ? dailyTrend.map(p => p.averageScore) : dailyTrend.map(p => p.compositeScore);
-  }, [cumulativeTrend, dailyTrend, trendType]);
+    if (trendType === 'average' && percentageMode) {
+      return vals.map(v => (v / MAX_AVERAGE_SCORE) * 100);
+    }
+    return vals;
+  }, [cumulativeTrend, dailyTrend, trendType, percentageMode]);
 
   // Compute moving average for smoothing
   const movingAverage = (values, windowSize = 7) => {
@@ -1115,8 +1125,12 @@ const Progress = () => {
               const val = ctx.parsed?.y;
               const raw = typeof val === 'number' && Number.isFinite(val) ? val : 0;
               const prefix = trendType === 'average' ? 'Average' : 'Composite';
-              const formatted =
-                trendType === 'average' ? raw.toFixed(0) : raw.toFixed(2);
+              let formatted;
+              if (trendType === 'average' && percentageMode) {
+                formatted = `${raw.toFixed(1)}%`;
+              } else {
+                formatted = trendType === 'average' ? raw.toFixed(0) : raw.toFixed(2);
+              }
               return ` ${prefix}: ${formatted}`;
             },
           },
@@ -1124,6 +1138,18 @@ const Progress = () => {
       },
       scales: {
         ...base.scales,
+        y: {
+          ...base.scales.y,
+          ticks: {
+            ...base.scales.y.ticks,
+            callback: (value) => {
+              if (trendType === 'average' && percentageMode) {
+                return `${value.toFixed(0)}%`;
+              }
+              return value;
+            },
+          },
+        },
         x: {
           ...base.scales.x,
           ticks: {
@@ -1135,7 +1161,7 @@ const Progress = () => {
         },
       },
     };
-  }, [isDark, dynMin, dynMax, isSmallScreen, zoomConfig, trendType]);
+  }, [isDark, dynMin, dynMax, isSmallScreen, zoomConfig, trendType, percentageMode]);
 
   const getTimeframeLabel = () => {
     switch (timeframe) {
@@ -1325,7 +1351,7 @@ const Progress = () => {
         />
         <KPIStatCard
           label="Average Score"
-          value={(stats.averageScore ?? 0).toFixed(2)}
+          value={formatScore(stats.averageScore ?? 0)}
           icon={BarChart3}
           emphasize={true}
         />
@@ -1391,14 +1417,17 @@ const Progress = () => {
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <div className="flex items-baseline gap-0.5 leading-none">
                     <CountUp
-                      to={Number((stats.averageScore ?? 0).toFixed(1))}
+                      to={formatScoreNumber(stats.averageScore ?? 0)}
                       from={0}
                       duration={1.5}
                       enabled={countUpEnabled}
                       className="text-4xl font-black text-jj-ink dark:text-stone-100"
                     />
+                    {percentageMode && (
+                      <span className="text-xl font-black text-jj-ink dark:text-stone-100">%</span>
+                    )}
                   </div>
-                  <span className="text-[10px] font-bold text-jj-muted dark:text-stone-500 uppercase tracking-widest mt-1">Avg Score</span>
+                  <span className="text-[10px] font-bold text-jj-muted dark:text-stone-500 uppercase tracking-widest mt-1">{scoreLabel}</span>
                 </div>
               </div>
 

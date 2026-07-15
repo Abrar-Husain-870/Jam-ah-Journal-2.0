@@ -40,10 +40,13 @@ import {
 import { db } from '../firebase/config';
 import { getMonthlyStats, getYearlyStats, calculatePrayerStats, getPrayerDataInRange } from '../services/analyticsService';
 import { useOnlineStatus } from '../contexts/OnlineStatusContext';
+import { usePercentageMode } from '../contexts/PercentageModeContext';
 
 const Leaderboard = () => {
   const { currentUser, getUserNickname } = useAuth();
   const { online } = useOnlineStatus();
+  const { formatScore } = usePercentageMode();
+
   const [activeTab, setActiveTab] = useState('global'); // 'global', 'friends', or 'requests'
   const [timePeriod, setTimePeriod] = useState('all'); // Default to 'all' (All Time)
   const [masjidModeFilter, setMasjidModeFilter] = useState('all'); // 'all', 'on', 'off'
@@ -281,7 +284,9 @@ const Leaderboard = () => {
                             >
                               {percentage > 15 && (
                                 <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-medium">
-                                  {value.toFixed(metric.key === 'averageScore' ? 1 : 0)}{metric.unit}
+                                  {metric.key === 'averageScore'
+                                    ? formatScore(value)
+                                    : `${value.toFixed(0)}${metric.unit}`}
                                 </div>
                               )}
                             </div>
@@ -289,7 +294,9 @@ const Leaderboard = () => {
                           
                           {percentage <= 15 && (
                             <div className="absolute left-2 top-0 h-6 flex items-center text-xs font-medium text-gray-600">
-                              {value.toFixed(metric.key === 'averageScore' ? 1 : 0)}{metric.unit}
+                              {metric.key === 'averageScore'
+                                ? formatScore(value)
+                                : `${value.toFixed(0)}${metric.unit}`}
                             </div>
                           )}
                         </div>
@@ -1460,13 +1467,13 @@ const Leaderboard = () => {
         {/* Score - Desktop */}
         <div className="text-right">
           <p className={`text-2xl font-bold tabular-nums ${scoreClass}`}>
-            {user.compositeScore ? user.compositeScore.toFixed(1) : (user.averageScore || 0).toFixed(2)}
+            {user.compositeScore ? user.compositeScore.toFixed(1) : formatScore(user.averageScore || 0)}
           </p>
           <p className={`text-sm ${metaClass}`}>
             {user.compositeScore ? 'composite score' : 'avg score'}
           </p>
           {user.compositeScore && (
-            <p className={`text-xs ${metaClass}`}>avg: {(user.averageScore || 0).toFixed(1)}</p>
+            <p className={`text-xs ${metaClass}`}>avg: {formatScore(user.averageScore || 0)}</p>
           )}
         </div>
       </div>
@@ -1504,13 +1511,13 @@ const Leaderboard = () => {
         {/* Score - Mobile */}
         <div className="text-right">
           <p className={`text-lg font-bold tabular-nums ${scoreClass}`}>
-            {user.compositeScore ? user.compositeScore.toFixed(1) : (user.averageScore || 0).toFixed(2)}
+            {user.compositeScore ? user.compositeScore.toFixed(1) : formatScore(user.averageScore || 0)}
           </p>
           <p className={`text-xs ${metaClass}`}>
             {user.compositeScore ? 'composite' : 'avg'}
           </p>
           {user.compositeScore && (
-            <p className={`text-xs ${metaClass}`}>avg: {(user.averageScore || 0).toFixed(1)}</p>
+            <p className={`text-xs ${metaClass}`}>avg: {formatScore(user.averageScore || 0)}</p>
           )}
         </div>
       </div>
@@ -2054,14 +2061,14 @@ const Leaderboard = () => {
                           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3">
                             <div className="text-center sm:text-right">
                               <p className="text-xl sm:text-2xl font-bold tabular-nums text-jj-ink dark:text-stone-100">
-                                {friend.compositeScore ? friend.compositeScore.toFixed(1) : (friend.averageScore || 0).toFixed(2)}
+                                {friend.compositeScore ? friend.compositeScore.toFixed(1) : formatScore(friend.averageScore || 0)}
                               </p>
                               <p className="text-sm text-jj-muted dark:text-stone-500">
                                 {friend.compositeScore ? 'composite score' : 'avg score'}
                               </p>
                               {friend.compositeScore && (
                                 <p className="text-xs text-jj-muted dark:text-stone-500">
-                                  avg: {(friend.averageScore || 0).toFixed(1)}
+                                  avg: {formatScore(friend.averageScore || 0)}
                                 </p>
                               )}
                             </div>

@@ -35,10 +35,15 @@ import { useOnlineStatus } from '../contexts/OnlineStatusContext';
 import { useModalDismiss } from '../hooks/useModalDismiss';
 import { isAdminUser } from '../utils/adminAccess';
 import { COUNTRIES, getFlagEmoji, getFlagUrl } from '../utils/countries';
+import { usePercentageMode } from '../contexts/PercentageModeContext';
+import { BarChart3 } from 'lucide-react';
+
 
 const Profile = () => {
   const { currentUser, logout, getUserNickname, refreshNickname, userNickname: contextNickname } = useAuth();
   const { online } = useOnlineStatus();
+  const { percentageMode, setPercentageMode } = usePercentageMode();
+
   const [userNickname, setUserNickname] = useState('');
   const [editingNickname, setEditingNickname] = useState(false);
   const [newNickname, setNewNickname] = useState('');
@@ -496,10 +501,10 @@ const [userToDelete, setUserToDelete] = useState(null);
           {/* Privacy Toggle */}
           <div>
             <label className="block text-sm font-medium text-jj-muted dark:text-stone-400 mb-2">Global leaderboard privacy</label>
-            <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-jj-mist/50 dark:bg-white/[0.04] rounded-jj-xl ring-1 ring-black/[0.04] dark:ring-white/[0.07]">
-              <div className="flex items-center gap-3 min-w-0">
-                <Shield className="w-5 h-5 text-jj-accent dark:text-teal-300 shrink-0" strokeWidth={1.75} />
-                <div>
+            <div className="flex items-start justify-between gap-3 p-3 sm:p-4 bg-jj-mist/50 dark:bg-white/[0.04] rounded-jj-xl ring-1 ring-black/[0.04] dark:ring-white/[0.07]">
+              <div className="flex items-start gap-3 min-w-0">
+                <Shield className="w-5 h-5 text-jj-accent dark:text-teal-300 shrink-0 mt-0.5" strokeWidth={1.75} />
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-jj-ink dark:text-stone-100">
                     Private mode
                   </p>
@@ -515,15 +520,15 @@ const [userToDelete, setUserToDelete] = useState(null);
                 onClick={handlePrivacyToggle}
                 disabled={loading || !online}
                 title={!online ? 'Offline: view-only' : ''}
-                className={`relative inline-flex h-7 w-12 items-center shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
+                className={`relative inline-flex h-7 w-12 items-center shrink-0 rounded-full transition-colors mt-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
                   isPrivacyEnabled ? 'bg-jj-accent dark:bg-teal-600' : 'bg-jj-mist dark:bg-white/15'
                 } ${!online ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 <span
-                  className={`absolute h-4 w-4 rounded-full bg-white transition-all duration-200 ease-in-out ${
+                  className={`absolute h-4 w-4 rounded-full bg-white transition-transform duration-200 ease-in-out left-1 ${
                     isPrivacyEnabled 
-                      ? 'left-[0.875rem] md:left-6' 
-                      : 'left-1'
+                      ? 'transform translate-x-6' 
+                      : 'transform translate-x-0'
                   }`}
                 />
               </button>
@@ -540,10 +545,10 @@ const [userToDelete, setUserToDelete] = useState(null);
           {/* Masjid Mode Toggle */}
           <div>
             <label className="block text-sm font-medium text-jj-muted dark:text-stone-400 mb-2">Prayer scoring mode</label>
-            <div className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-jj-mist/50 dark:bg-white/[0.04] rounded-jj-xl ring-1 ring-black/[0.04] dark:ring-white/[0.07]">
-              <div className="flex items-center gap-3 min-w-0">
-                <Building className="w-5 h-5 text-jj-accent dark:text-teal-300 shrink-0" strokeWidth={1.75} />
-                <div>
+            <div className="flex items-start justify-between gap-3 p-3 sm:p-4 bg-jj-mist/50 dark:bg-white/[0.04] rounded-jj-xl ring-1 ring-black/[0.04] dark:ring-white/[0.07]">
+              <div className="flex items-start gap-3 min-w-0">
+                <Building className="w-5 h-5 text-jj-accent dark:text-teal-300 shrink-0 mt-0.5" strokeWidth={1.75} />
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-jj-ink dark:text-stone-100">
                     Home prayer mode
                   </p>
@@ -559,15 +564,15 @@ const [userToDelete, setUserToDelete] = useState(null);
                 onClick={handleMasjidModeToggle}
                 disabled={loading || !online}
                 title={!online ? 'Offline: view-only' : ''}
-                className={`relative inline-flex h-7 w-12 items-center shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
+                className={`relative inline-flex h-7 w-12 items-center shrink-0 rounded-full transition-colors mt-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
                   isMasjidModeEnabled ? 'bg-jj-accent dark:bg-teal-600' : 'bg-jj-mist dark:bg-white/15'
                 } ${!online ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 <span
-                  className={`absolute h-4 w-4 rounded-full bg-white transition-all duration-200 ease-in-out ${
+                  className={`absolute h-4 w-4 rounded-full bg-white transition-transform duration-200 ease-in-out left-1 ${
                     isMasjidModeEnabled 
-                      ? 'left-[0.875rem] md:left-6' 
-                      : 'left-1'
+                      ? 'transform translate-x-6' 
+                      : 'transform translate-x-0'
                   }`}
                 />
               </button>
@@ -580,8 +585,52 @@ const [userToDelete, setUserToDelete] = useState(null);
               )}
             </div>
           </div>
+
+          {/* Percentage Mode Toggle */}
+          <div>
+            <label className="block text-sm font-medium text-jj-muted dark:text-stone-400 mb-2">Percentage Mode</label>
+            <div className="flex items-start justify-between gap-3 p-3 sm:p-4 bg-jj-mist/50 dark:bg-white/[0.04] rounded-jj-xl ring-1 ring-black/[0.04] dark:ring-white/[0.07]">
+              <div className="flex items-start gap-3 min-w-0">
+                <BarChart3 className="w-5 h-5 text-jj-accent dark:text-teal-300 shrink-0 mt-0.5" strokeWidth={1.75} />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-jj-ink dark:text-stone-100">
+                    Percentage Mode
+                  </p>
+                  <p className="text-xs text-jj-muted dark:text-stone-400 mt-0.5 leading-snug">
+                    {percentageMode 
+                      ? 'Display average progress as a percentage' 
+                      : 'Display average progress as raw points'
+                    }
+                  </p>
+                </div>
+              </div>
+              <button
+                id="percentage-mode-toggle"
+                onClick={() => setPercentageMode(!percentageMode)}
+                aria-pressed={percentageMode}
+                className={`relative inline-flex h-7 w-12 items-center shrink-0 rounded-full transition-colors mt-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-jj-accent focus-visible:ring-offset-2 focus-visible:ring-offset-jj-surface dark:focus-visible:ring-offset-jj-surface-dark-2 ${
+                  percentageMode ? 'bg-jj-accent dark:bg-teal-600' : 'bg-jj-mist dark:bg-white/15'
+                }`}
+              >
+                <span
+                  className={`absolute h-4 w-4 rounded-full bg-white transition-transform duration-200 ease-in-out left-1 ${
+                    percentageMode 
+                      ? 'transform translate-x-6' 
+                      : 'transform translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+            <div className="mt-2 flex items-start gap-1.5 text-xs text-jj-muted dark:text-stone-500 leading-normal">
+              <BarChart3 className="w-3.5 h-3.5 shrink-0 mt-0.5" strokeWidth={1.75} />
+              <span>
+                Displays your progress as a percentage of the maximum possible score (135 points) instead of raw points. Friday Surah Al-Kahf (+10 pts) acts as a bonus.
+              </span>
+            </div>
+          </div>
         </div>
       </div>
+
 
       <RefreshAppButton />
 

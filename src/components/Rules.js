@@ -18,7 +18,8 @@ import {
   Star,
   Zap,
   Mail,
-  Linkedin
+  Linkedin,
+  BarChart3
 } from 'lucide-react';
 import { MosqueIcon } from './icons/MosqueIcon';
 
@@ -198,7 +199,7 @@ const Rules = () => {
               <FormulaBox
                 title="Average Score"
                 formula="Total Score ÷ Days Actually Tracked"
-                example="If you scored 135 points over 1 day tracked = 135.00 average"
+                example="If you scored 135 points over 1 day tracked = 135.00 average (or 100% in Percentage Mode: 135 / 135 × 100)"
               />
               
               <FormulaBox
@@ -301,6 +302,36 @@ const Rules = () => {
                         • Hidden from leaderboards<br/>
                         • Personal tracking only<br/>
                         • Complete privacy
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-jj-lg p-4 border border-jj-border/80 dark:border-white/[0.08] bg-jj-surface dark:bg-jj-elevated-dark">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <BarChart3 className="w-5 h-5 text-jj-accent dark:text-teal-300" />
+                    <h4 className="font-semibold text-jj-ink dark:text-stone-100">Percentage Mode Toggle</h4>
+                  </div>
+                  <p className="text-jj-ink/90 dark:text-stone-300 mb-3">
+                    <strong>Location:</strong> Profile → Settings<br/>
+                    <strong>Default:</strong> OFF (Raw Points)
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="rounded-jj bg-jj-mist/55 dark:bg-white/[0.04] p-3">
+                      <h5 className="font-medium text-jj-ink dark:text-stone-100 mb-1">Raw Points (OFF)</h5>
+                      <p className="text-sm text-jj-muted dark:text-stone-400">
+                        • Displays average progress as raw points<br/>
+                        • Maximum daily score is 135 pts (145 pts on Fridays)<br/>
+                        • Shows exact points earned
+                      </p>
+                    </div>
+                    <div className="rounded-jj bg-teal-50/40 dark:bg-teal-950/15 p-3 ring-1 ring-teal-900/8 dark:ring-teal-600/15">
+                      <h5 className="font-medium text-jj-ink dark:text-stone-100 mb-1">Percentages (ON)</h5>
+                      <p className="text-sm text-jj-muted dark:text-stone-400">
+                        • Displays average progress as a percentage of 135 pts<br/>
+                        • Friday Surah Al-Kahf (+10 pts) is treated as a bonus (can exceed 100%)<br/>
+                        • Easier to interpret and compare at a glance<br/>
+                        • Underlying scoring/ranking math is completely unchanged
                       </p>
                     </div>
                   </div>

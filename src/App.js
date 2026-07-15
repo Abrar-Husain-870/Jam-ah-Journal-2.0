@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { PercentageModeProvider } from './contexts/PercentageModeContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Login from './components/Login';
 import PrayerCalendar from './components/PrayerCalendar';
@@ -17,6 +18,7 @@ function AppContent() {
   const { currentUser } = useAuth();
   const [currentPage, setCurrentPage] = useState('calendar');
   const { online } = useOnlineStatus();
+
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -44,7 +46,7 @@ function AppContent() {
   };
 
   return (
-    <>
+    <PercentageModeProvider currentUser={currentUser}>
       <UpdateNotification />
       <AppShell
         currentPage={currentPage}
@@ -56,7 +58,7 @@ function AppContent() {
         </div>
       </AppShell>
       <PWAInstallPrompt />
-    </>
+    </PercentageModeProvider>
   );
 }
 
